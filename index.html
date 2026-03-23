@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Actualizare | Viralio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+        
+        /* Efectul ultra-modern de sticlă */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        /* Animație pentru status bar */
+        @keyframes loading-shimmer {
+            0% { transform: translateX(-150%); }
+            100% { transform: translateX(250%); }
+        }
+        .animate-shimmer {
+            animation: loading-shimmer 2.5s infinite linear;
+        }
+
+        /* Animație puls pentru background */
+        @keyframes pulse-slow {
+            0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.3; }
+            50% { transform: scale(1.1) translate(20px, -20px); opacity: 0.5; }
+        }
+        .bg-blob { animation: pulse-slow 10s infinite alternate ease-in-out; }
+    </style>
+</head>
+<body class="bg-[#09090b] text-white min-h-[100dvh] flex items-center justify-center overflow-hidden relative selection:bg-indigo-500 selection:text-white">
+
+    <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/30 rounded-full blur-[120px] bg-blob pointer-events-none mix-blend-screen"></div>
+    <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-600/20 rounded-full blur-[120px] bg-blob pointer-events-none mix-blend-screen" style="animation-delay: -5s;"></div>
+
+    <div class="glass-panel relative z-10 max-w-lg w-[90%] mx-auto p-10 md:p-14 rounded-[2.5rem] text-center transform transition-all hover:scale-[1.01]">
+        
+        <div class="relative w-24 h-24 mx-auto mb-8 flex items-center justify-center group">
+            <div class="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-3xl animate-[spin_4s_linear_infinite] opacity-80 group-hover:opacity-100 transition-opacity"></div>
+            <div class="absolute inset-[3px] bg-[#09090b] rounded-[21px] flex items-center justify-center">
+                <i class="fa-solid fa-wand-magic-sparkles text-3xl text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-pink-400 animate-pulse"></i>
+            </div>
+        </div>
+
+        <h1 class="text-3xl md:text-4xl font-black mb-4 tracking-tight">
+            Revenim <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-pink-400">Imediat</span>
+        </h1>
+        <p class="text-slate-400 text-sm md:text-[0.95rem] leading-relaxed mb-10 font-medium px-2">
+            Facem puțină magie în spate. Lucrăm la un update pentru a face platforma și mai rapidă. Te rugăm să revii în câteva minute.
+        </p>
+
+        <div class="bg-black/40 border border-white/5 rounded-full p-1.5 relative overflow-hidden shadow-inner">
+            <div class="absolute top-0 bottom-0 w-1/2 bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent animate-shimmer"></div>
+            <div class="w-full flex items-center justify-between px-4 py-2 relative z-10">
+                <div class="flex items-center gap-2.5">
+                    <span class="relative flex h-3 w-3">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]"></span>
+                    </span>
+                    <span class="text-xs font-bold text-slate-300 uppercase tracking-widest">Status Server</span>
+                </div>
+                <span class="text-xs font-black text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
+                    Se Actualizează
+                    <span class="flex gap-0.5">
+                        <span class="animate-bounce" style="animation-delay: 0s">.</span>
+                        <span class="animate-bounce" style="animation-delay: 0.1s">.</span>
+                        <span class="animate-bounce" style="animation-delay: 0.2s">.</span>
+                    </span>
+                </span>
+            </div>
+        </div>
+
+        <button onclick="window.location.reload()" class="mt-8 text-xs font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center mx-auto gap-2 py-2 px-4 rounded-xl hover:bg-white/5">
+            <i class="fa-solid fa-rotate-right"></i> Verifică din nou
+        </button>
+        
+    </div>
+
+</body>
+</html>
