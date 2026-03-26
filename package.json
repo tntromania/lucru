@@ -1,0 +1,17 @@
+{
+  "name": "viralio-voice",
+  "version": "3.0.0",
+  "description": "Voice AI Engine via Replicate + MongoDB Wallet",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.2.1",
+    "google-auth-library": "^9.0.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
