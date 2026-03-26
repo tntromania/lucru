@@ -183,6 +183,9 @@ app.post('/api/generate', authenticate, async (req, res) => {
     try {
         const { text, voice, stability, similarity_boost, speed } = req.body;
         const user = await User.findById(req.userId);
+		
+		console.log(`📝 [${new Date().toLocaleTimeString('ro-RO')}] ${user.name} (${user.email}) | chars: ${text?.length || 0} (fără spații: ${(text || '').replace(/\s+/g, '').length}) | voce: ${voice}`);
+
 
         if (!text) return res.status(400).json({ error: "Script text lipsă." });
 
@@ -194,8 +197,8 @@ app.post('/api/generate', authenticate, async (req, res) => {
             return res.status(403).json({ error: `Fonduri insuficiente. Ai nevoie de ${cost} caractere.` });
         }
 
-        // Determinăm voice_id
-        const voiceId = VOICE_ID_MAP[voice] || VOICE_ID_MAP["Paul"];
+        // Determinăm voice_id — preferăm voiceId trimis direct din frontend
+        const voiceId = req.body.voiceId || VOICE_ID_MAP[voice] || VOICE_ID_MAP["Paul"];
         const modelId = "eleven_multilingual_v2"; // sau eleven_turbo_v2_5 pentru viteză mai mare
 
         console.log(`🎙️ Generare voce AI33: ${voice} (${voiceId}) pentru ${user.name}`);
