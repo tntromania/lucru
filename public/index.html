@@ -317,8 +317,8 @@
     <!-- Header -->
     <div class="vm-header">
       <div class="vm-header-left">
-        <div class="vm-header-icon" style="background:linear-gradient(135deg,#4f46e5,#ec4899);padding:0;overflow:hidden;">
-          <img src="/assets/android-chrome-192x192.png" alt="Viralio" style="width:100%;height:100%;object-fit:cover;border-radius:0.9rem;">
+        <div class="vm-header-icon" style="padding:0;overflow:hidden;background:none;box-shadow:none;border-radius:0.9rem;">
+          <img src="/assets/apple-touch-icon.png" alt="Viralio" style="width:100%;height:100%;object-fit:cover;border-radius:0.9rem;display:block;">
         </div>
         <div>
           <div class="vm-header-title">Alege Vocea</div>
@@ -337,8 +337,8 @@
       </div>
       <div class="vm-filters" role="group">
         <button class="vmf vmf-on" data-f="all"     onclick="setVmFilter('all')">⚡ Toate</button>
-        <button class="vmf" data-f="male"    onclick="setVmFilter('male')">♂ Masculine</button>
-        <button class="vmf" data-f="female"  onclick="setVmFilter('female')">♀ Feminine</button>
+        <button class="vmf" data-f="male"    onclick="setVmFilter('male')">Masculine</button>
+        <button class="vmf" data-f="female"  onclick="setVmFilter('female')">Feminine</button>
         <button class="vmf" data-f="young"   onclick="setVmFilter('young')">🔥 Tineri</button>
         <button class="vmf" data-f="mature"  onclick="setVmFilter('mature')">🎙 Maturi</button>
         <button class="vmf" data-f="shared"  onclick="setVmFilter('shared')">🌐 Comunitate</button>
@@ -348,7 +348,7 @@
     </div>
 
     <!-- Stats bar -->
-    <div class="vm-stats-bar">
+    <div class="vm-stats-bar" style="justify-content:flex-end;">
       <div class="vm-sort-btns">
         <button class="vm-sort-btn active" id="sort-az" onclick="setSortMode('az')">A→Z</button>
         <button class="vm-sort-btn" id="sort-gender" onclick="setSortMode('gender')">Gen</button>
@@ -554,7 +554,7 @@ function renderVoiceGrid(){
         const col=vColor(v);
         const initials=v.name.replace(/[^A-Za-zÀ-ž ]/g,'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||v.name.substring(0,2).toUpperCase();
         const isActive=v.id===activeVoiceId;
-        const genderLabel=v.gender==='female'?'♀ Feminin':v.gender==='male'?'♂ Masculin':'✦ Special';
+        const genderLabel=v.gender==='female'?'Feminin':v.gender==='male'?'Masculin':'Special';
         const genderClass=v.gender==='female'?'vm-g-f':v.gender==='male'?'vm-g-m':'vm-g-s';
         const useLabel=USE_LABELS[v.use]||'⚡ General';
         const delay=Math.min(i*0.015, 0.3);
