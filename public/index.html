@@ -170,16 +170,14 @@
                 <!-- VOICE PICKER TRIGGER -->
                 <div class="shrink-0">
                     <label class="text-sm font-bold text-slate-700 mb-2 block">Actor Vocal</label>
-                    <button onclick="openVoiceModal()" id="voice-trigger-btn" class="w-full h-16 bg-white border-2 border-slate-200 rounded-2xl px-4 flex items-center justify-between hover:border-indigo-400 hover:shadow-[0_0_0_4px_rgba(99,102,241,0.08)] transition-all focus:outline-none group">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black text-white shadow-md transition-transform group-hover:scale-105" id="active-voice-avatar" style="background:#09090b">RO</div>
-                            <div class="text-left">
-                                <span class="text-sm font-black text-slate-900 block leading-tight" id="active-voice-name">Roger</span>
-                                <span class="text-[0.65rem] font-semibold text-indigo-500 uppercase tracking-wider" id="active-voice-badge">american · conversational · classy</span>
-                            </div>
+                    <button onclick="openVoiceModal()" id="voice-trigger-btn" class="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 flex items-center gap-3 hover:border-indigo-400 hover:shadow-[0_0_0_4px_rgba(99,102,241,0.08)] transition-all focus:outline-none group">
+                        <div class="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-black text-white shadow-md flex-shrink-0 transition-transform group-hover:scale-105" id="active-voice-avatar" style="background:#6366f1">RO</div>
+                        <div class="flex-1 text-left min-w-0">
+                            <span class="text-sm font-black text-slate-900 block leading-tight truncate" id="active-voice-name">Roger</span>
+                            <span class="text-[0.65rem] font-medium text-slate-400 uppercase tracking-wide truncate block mt-0.5" id="active-voice-badge">american · conversational · classy</span>
                         </div>
-                        <div class="flex items-center gap-2 bg-slate-100 group-hover:bg-indigo-100 rounded-lg px-3 py-1.5 transition-colors">
-                            <i class="fa-solid fa-grid-2 text-slate-400 group-hover:text-indigo-500 text-xs transition-colors"></i>
+                        <div class="flex-shrink-0 w-7 h-7 rounded-lg bg-slate-100 group-hover:bg-indigo-100 flex items-center justify-center transition-colors">
+                            <i class="fa-solid fa-chevron-right text-slate-400 group-hover:text-indigo-500 text-xs transition-colors"></i>
                         </div>
                     </button>
                 </div>
@@ -726,20 +724,24 @@ function renderHistory(){
     const box=document.getElementById('history-box'); if(!box) return;
     if(!hist.length) return;
     box.innerHTML='';
-    hist.forEach(h=>{
+    hist.forEach((h,i)=>{
         const el=document.createElement('div');
         el.className='p-3 bg-slate-50 border border-slate-100 rounded-xl hover:border-viralio-200 transition-all group flex items-center justify-between gap-3 shadow-sm';
+        el.dataset.url=h.url; el.dataset.voice=h.voice; el.dataset.text=h.text;
         el.innerHTML=`
-            <button onclick="launchPlayer('${h.url}','${h.voice}','${h.text.replace(/'/g,"\\'")}' )" class="w-9 h-9 shrink-0 rounded-full bg-white shadow-md flex items-center justify-center text-slate-600 group-hover:bg-viralio-600 group-hover:text-white transition-all border border-slate-100">
+            <button class="hist-play w-9 h-9 shrink-0 rounded-full bg-white shadow-md flex items-center justify-center text-slate-600 group-hover:bg-viralio-600 group-hover:text-white transition-all border border-slate-100">
                 <i class="fa-solid fa-play text-[0.7rem] ml-0.5"></i>
             </button>
-            <div class="flex-1 overflow-hidden cursor-pointer" onclick="launchPlayer('${h.url}','${h.voice}','${h.text.replace(/'/g,"\\'")}')">
+            <div class="flex-1 overflow-hidden cursor-pointer hist-play">
                 <p class="text-xs font-bold text-slate-800 truncate">${h.text}...</p>
-                <p class="text-[0.65rem] font-bold text-slate-400 mt-0.5"><span class="text-indigo-500">${h.voice}</span> • ${h.time}</p>
+                <p class="text-[0.65rem] font-bold text-slate-400 mt-0.5"><span class="text-indigo-500">${h.voice}</span> · ${h.time}</p>
             </div>
             <a href="${h.url}" download="viralio_voice.mp3" class="w-8 h-8 shrink-0 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-500 transition-all">
                 <i class="fa-solid fa-download text-xs"></i>
             </a>`;
+        el.querySelectorAll('.hist-play').forEach(btn=>{
+            btn.addEventListener('click',()=>launchPlayer(h.url, h.voice, h.text));
+        });
         box.appendChild(el);
     });
 }
