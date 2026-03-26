@@ -179,7 +179,6 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-2 bg-slate-100 group-hover:bg-indigo-100 rounded-lg px-3 py-1.5 transition-colors">
-                            <span class="text-[0.65rem] font-black text-slate-500 group-hover:text-indigo-600 uppercase tracking-widest" id="voice-count-badge">— voci</span>
                             <i class="fa-solid fa-grid-2 text-slate-400 group-hover:text-indigo-500 text-xs transition-colors"></i>
                         </div>
                     </button>
@@ -318,7 +317,9 @@
     <!-- Header -->
     <div class="vm-header">
       <div class="vm-header-left">
-        <div class="vm-header-icon"><i class="fa-solid fa-waveform-lines"></i></div>
+        <div class="vm-header-icon" style="background:linear-gradient(135deg,#4f46e5,#ec4899);padding:0;overflow:hidden;">
+          <img src="/assets/android-chrome-192x192.png" alt="Viralio" style="width:100%;height:100%;object-fit:cover;border-radius:0.9rem;">
+        </div>
         <div>
           <div class="vm-header-title">Alege Vocea</div>
           <div class="vm-header-sub"><span id="vm-result-count">—</span> voci disponibile · ElevenLabs AI</div>
@@ -342,18 +343,12 @@
         <button class="vmf" data-f="mature"  onclick="setVmFilter('mature')">🎙 Maturi</button>
         <button class="vmf" data-f="shared"  onclick="setVmFilter('shared')">🌐 Comunitate</button>
         <button class="vmf" data-f="special" onclick="setVmFilter('special')">✨ Speciale</button>
-        <button class="vmf" data-f="american"  onclick="setVmFilter('american')">🇺🇸 American</button>
-        <button class="vmf" data-f="british"   onclick="setVmFilter('british')">🇬🇧 British</button>
-        <button class="vmf" data-f="australian" onclick="setVmFilter('australian')">🇦🇺 Australian</button>
-        <button class="vmf" data-f="spanish"   onclick="setVmFilter('spanish')">🇪🇸 Spanish</button>
-        <button class="vmf" data-f="french"    onclick="setVmFilter('french')">🇫🇷 French</button>
-        <button class="vmf" data-f="indian"    onclick="setVmFilter('indian')">🇮🇳 Indian</button>
+
       </div>
     </div>
 
     <!-- Stats bar -->
     <div class="vm-stats-bar">
-      <span class="vm-result-count" id="vm-count-label">— voci</span>
       <div class="vm-sort-btns">
         <button class="vm-sort-btn active" id="sort-az" onclick="setSortMode('az')">A→Z</button>
         <button class="vm-sort-btn" id="sort-gender" onclick="setSortMode('gender')">Gen</button>
@@ -416,7 +411,6 @@ window.onload = async()=>{
     updateSlider('stab'); updateSlider('sim'); updateSlider('speed');
     renderHistory();
     // update voice count badge
-    document.getElementById('voice-count-badge').innerText = ALL_VOICES.length+' voci';
     document.getElementById('vm-result-count').innerText = ALL_VOICES.length;
     const token=getToken();
     if(token){
@@ -517,7 +511,7 @@ function togglePreview(vid, btn){
     if(previewActiveId===vid){ stopPreview(); return; }
     stopPreview();
     previewActiveId=vid;
-    const url=`https://api.ai33.pro/v1/voices/${vid}/preview`;
+    const url=`/assets/previews/${vid}.mp3`;
     previewAudio=new Audio(url);
     previewAudio.play().catch(()=>{});
     btn.innerHTML='<i class="fa-solid fa-pause" style="font-size:.6rem"></i>';
@@ -549,9 +543,7 @@ function renderVoiceGrid(){
     const grid=document.getElementById('vm-grid');
     const empty=document.getElementById('vm-empty');
     const countEl=document.getElementById('vm-result-count');
-    const countLabel=document.getElementById('vm-count-label');
     if(countEl) countEl.innerText=list.length;
-    if(countLabel) countLabel.innerText=list.length+' voci';
 
     if(!list.length){
         grid.innerHTML=''; empty.style.display='flex'; return;
