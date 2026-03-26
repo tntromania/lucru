@@ -6,15 +6,18 @@
     <title>Voice AI | Viralio Studio</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-	
+
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png?v=3">
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png?v=3">
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png?v=3">
     <link rel="manifest" href="/assets/site.webmanifest?v=3">
     <link rel="shortcut icon" href="/assets/favicon.ico?v=3">
+
+    <!-- Voice Modal CSS -->
+    <link rel="stylesheet" href="/voice-modal.css">
     
     <script>
         tailwind.config = {
@@ -49,9 +52,6 @@
         .viralio-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
         .slider-progress { position: absolute; top: 11px; left: 0; height: 6px; background: #4f46e5; border-radius: 4px; pointer-events: none; z-index: 5; }
 
-        .v-dropdown { display: none; opacity: 0; transform: translateY(-10px); transition: all 0.2s ease; }
-        .v-dropdown.show { display: block; opacity: 1; transform: translateY(0); }
-        
         #login-modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); z-index: 99999; align-items: center; justify-content: center; opacity: 0; transition: 0.3s; }
         #login-modal.show { display: flex; opacity: 1; }
         .modal-content { background: #ffffff; border-radius: 28px; padding: 40px; text-align: center; max-width: 420px; width: 90%; transform: translateY(20px); transition: 0.4s; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
@@ -65,9 +65,15 @@
         .eq-bar { width: 4px; border-radius: 2px; background: #ec4899; height: 4px; transition: height 0.1s; }
         .playing .eq-bar { animation: eqBounce 0.7s ease-in-out infinite alternate; }
         @keyframes eqBounce { 0% { height: 4px; } 100% { height: 20px; } }
-        
-        .preview-btn { transition: all 0.2s; }
-        .preview-btn:hover { background-color: #eef2ff; color: #4f46e5; }
+
+        @keyframes premiumShine {
+            0% { transform: translateX(-150%) skewX(-20deg); opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translateX(250%) skewX(-20deg); opacity: 0; }
+        }
+        .animate-shine-fast { animation: premiumShine 2.5s infinite cubic-bezier(0.4, 0, 0.2, 1); }
+        .glass-premium-fin { box-shadow: 0 10px 30px -10px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.8); }
     </style>
 </head>
 <body class="md:p-4 selection:bg-viralio-500 selection:text-white">
@@ -77,6 +83,7 @@
     <div class="absolute top-0 right-1/4 w-[500px] h-[500px] bg-indigo-500/5 rounded-full blur-[100px] pointer-events-none z-0 mix-blend-multiply"></div>
     <div class="absolute top-[20%] left-[-10%] w-[400px] h-[400px] bg-pink-500/5 rounded-full blur-[100px] pointer-events-none z-0 mix-blend-multiply"></div>
 
+    <!-- NAV -->
     <div class="sticky top-0 z-50 flex w-full justify-center px-2 py-4 md:p-2 max-w-screen-2xl mx-auto">
         <nav class="w-full rounded-2xl border border-slate-200 bg-white/80 backdrop-blur-xl md:mx-12 shadow-sm px-5 md:px-8 py-3 flex justify-between items-center">
             <a class="flex items-center font-black text-2xl tracking-tight text-slate-900 group" href="https://viralio.ro">
@@ -99,6 +106,7 @@
         </nav>
     </div>
 
+    <!-- LOGIN MODAL -->
     <div id="login-modal">
         <div class="modal-content relative">
             <button class="absolute top-4 right-5 text-slate-400 hover:text-slate-900" onclick="closeLoginModal()"><i class="fa-solid fa-xmark text-xl"></i></button>
@@ -112,8 +120,10 @@
         </div>
     </div>
 
+    <!-- MAIN -->
     <main class="w-full max-w-6xl mx-auto pt-8 px-4 md:px-8 z-10 relative flex flex-col lg:flex-row gap-6 items-stretch flex-1">
         
+        <!-- SCRIPT EDITOR -->
         <div class="flex-1 flex flex-col bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden animate-slide-up">
             <div class="px-6 md:px-8 pt-6 pb-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
                 <h2 class="text-lg font-black text-slate-900 flex items-center gap-2">
@@ -123,17 +133,14 @@
                     <span id="char-count" class="text-viralio-600 font-black">0</span> / 5000
                 </div>
             </div>
-
             <div class="flex-1 relative p-6 md:p-8 overflow-hidden bg-white min-h-[300px]">
                 <textarea id="script-input" class="w-full h-full bg-transparent border-none outline-none resize-none text-slate-800 text-[1.1rem] md:text-xl font-medium leading-relaxed placeholder:text-slate-300 no-scrollbar" placeholder="Lipește aici povestea ta. Modelul Viralio 2.5 HD va citi respectând intonația naturală..."></textarea>
             </div>
-
             <div class="px-6 md:px-8 py-5 border-t border-slate-100 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
                 <div class="flex gap-2 w-full sm:w-auto">
                     <button onclick="clearText()" class="flex-1 sm:flex-none px-4 py-2.5 bg-white border border-slate-200 text-slate-500 hover:text-red-500 hover:border-red-200 hover:bg-red-50 rounded-xl text-sm font-bold shadow-sm transition-all flex justify-center items-center gap-2"><i class="fa-solid fa-eraser"></i> Curăță</button>
                     <button onclick="pasteText()" class="flex-1 sm:flex-none px-4 py-2.5 bg-white border border-slate-200 text-slate-700 hover:text-viralio-600 hover:border-viralio-200 hover:bg-indigo-50 rounded-xl text-sm font-bold shadow-sm transition-all flex justify-center items-center gap-2"><i class="fa-solid fa-paste"></i> Lipește</button>
                 </div>
-                
                 <div class="flex items-center justify-between w-full sm:w-auto gap-5">
                     <div class="text-right">
                         <p class="text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Cost Generare</p>
@@ -147,6 +154,7 @@
             </div>
         </div>
 
+        <!-- SIDEBAR -->
         <aside class="w-full lg:w-[420px] flex flex-col bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden animate-slide-up" style="animation-delay: 0.1s;">
             <div class="flex border-b border-slate-100 bg-slate-50/50 px-4 pt-4 shrink-0">
                 <button onclick="switchTab('settings')" id="tab-btn-settings" class="flex-1 py-3 text-sm font-black border-b-2 border-viralio-600 text-viralio-600 transition-all">Parametrii AI</button>
@@ -159,23 +167,22 @@
                     <span class="text-xs font-black text-transparent bg-clip-text bg-gradient-viralio"><i class="fa-solid fa-bolt text-amber-400 mr-1"></i> Viralio 2.5 HD</span>
                 </div>
 
-                <div class="relative shrink-0" id="voice-selector-container">
+                <!-- VOICE PICKER TRIGGER -->
+                <div class="shrink-0">
                     <label class="text-sm font-bold text-slate-700 mb-2 block">Actor Vocal</label>
-                    <button onclick="toggleVoiceDropdown()" class="w-full h-14 bg-white border-2 border-slate-200 rounded-xl px-4 flex items-center justify-between hover:border-viralio-400 transition-colors focus:outline-none">
+                    <button onclick="openVoiceModal()" id="voice-trigger-btn" class="w-full h-16 bg-white border-2 border-slate-200 rounded-2xl px-4 flex items-center justify-between hover:border-indigo-400 hover:shadow-[0_0_0_4px_rgba(99,102,241,0.08)] transition-all focus:outline-none group">
                         <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-xs font-bold text-white shadow-sm" id="active-voice-avatar">PA</div>
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black text-white shadow-md transition-transform group-hover:scale-105" id="active-voice-avatar" style="background:#09090b">RO</div>
                             <div class="text-left">
-                                <span class="text-sm font-black text-slate-900 block leading-tight" id="active-voice-name">Paul</span>
-                                <span class="text-[0.65rem] font-bold text-viralio-600 uppercase" id="active-voice-badge">Masculin, Documentar</span>
+                                <span class="text-sm font-black text-slate-900 block leading-tight" id="active-voice-name">Roger</span>
+                                <span class="text-[0.65rem] font-semibold text-indigo-500 uppercase tracking-wider" id="active-voice-badge">american · conversational · classy</span>
                             </div>
                         </div>
-                        <i class="fa-solid fa-chevron-down text-slate-400"></i>
+                        <div class="flex items-center gap-2 bg-slate-100 group-hover:bg-indigo-100 rounded-lg px-3 py-1.5 transition-colors">
+                            <span class="text-[0.65rem] font-black text-slate-500 group-hover:text-indigo-600 uppercase tracking-widest" id="voice-count-badge">— voci</span>
+                            <i class="fa-solid fa-grid-2 text-slate-400 group-hover:text-indigo-500 text-xs transition-colors"></i>
+                        </div>
                     </button>
-                    
-                    <div id="voice-dropdown" class="v-dropdown absolute top-[calc(100%+8px)] left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] max-h-[300px] overflow-y-auto z-50 no-scrollbar">
-                        <div id="voice-list" class="pb-2">
-                            </div>
-                    </div>
                 </div>
 
                 <div class="w-full h-px bg-slate-100 shrink-0"></div>
@@ -195,7 +202,6 @@
                             <input type="range" id="param-stab" min="0" max="100" value="50" class="viralio-slider" oninput="updateSlider('stab')">
                         </div>
                     </div>
-                    
                     <div class="relative">
                         <div class="flex justify-between items-end mb-1">
                             <label class="text-sm font-bold text-slate-700">Fidelitate</label>
@@ -210,7 +216,6 @@
                             <input type="range" id="param-sim" min="0" max="100" value="75" class="viralio-slider" oninput="updateSlider('sim')">
                         </div>
                     </div>
-
                     <div class="relative">
                         <div class="flex justify-between items-end mb-1">
                             <label class="text-sm font-bold text-slate-700">Viteză Vorbire</label>
@@ -234,14 +239,13 @@
                     <button onclick="clearHistory()" class="text-[0.65rem] font-bold text-red-500 hover:text-red-600 uppercase transition-colors">Șterge tot</button>
                 </div>
                 <div id="history-box" class="flex-1 overflow-y-auto px-4 pb-4 space-y-2 no-scrollbar">
-                    <div class="text-center text-slate-400 text-sm font-medium py-10" id="empty-history">
-                        Nu ai generat nimic încă.
-                    </div>
+                    <div class="text-center text-slate-400 text-sm font-medium py-10" id="empty-history">Nu ai generat nimic încă.</div>
                 </div>
             </div>
         </aside>
     </main>
 
+    <!-- PLAYER BAR -->
     <div id="player-bar" class="absolute bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-3xl bg-white/95 backdrop-blur-3xl border border-slate-200 rounded-[2rem] p-3 md:p-4 flex items-center gap-3 md:gap-5 shadow-[0_20px_50px_rgba(0,0,0,0.15)] translate-y-40 transition-transform duration-500 z-50">
         <button id="player-play-btn" class="w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-full bg-slate-900 text-white flex items-center justify-center text-lg shadow-lg hover:scale-105 hover:bg-viralio-600 transition-all">
             <i class="fa-solid fa-play ml-1"></i>
@@ -273,507 +277,10 @@
             </button>
         </div>
     </div>
-</div> 
+</div>
 
-<audio id="core-audio" class="hidden"></audio>
-<audio id="preview-audio" class="hidden"></audio> <script>
-// --- 1. AUTH LOGIC ---
-    function setToken(token) { document.cookie = "viralio_token=" + token + "; domain=.viralio.ro; path=/; max-age=604800; Secure; SameSite=Lax"; }
-    function getToken() { const match = document.cookie.match(/(?:^|; )viralio_token=([^;]*)/); return match ? match[1] : null; }
-    function removeToken() { document.cookie = "viralio_token=; domain=.viralio.ro; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"; }
-
-    function openLoginModal() { document.getElementById('login-modal').classList.add('show'); }
-    function closeLoginModal() { document.getElementById('login-modal').classList.remove('show'); }
-
-    window.handleCredentialResponse = async function(response) {
-        try {
-            const res = await fetch('/api/auth/google', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ credential: response.credential }) 
-            });
-            const data = await res.json();
-            
-            if(data.token) { 
-                setToken(data.token); 
-                closeLoginModal(); 
-                updateUI(data.user); 
-            } else {
-                alert("Eroare la conectare. Serverul nu a returnat token.");
-            }
-        } catch (e) { 
-            console.error(e);
-            alert('Eroare conexiune server.'); 
-        }
-    }
-
-    let currentVoiceCharacters = 0;
-
-    function updateUI(user) {
-        const loginBtn = document.getElementById('login-top-btn');
-        if (loginBtn) loginBtn.style.display = 'none';
-        
-        const userNav = document.getElementById('user-profile');
-        if (userNav) {
-            userNav.classList.remove('hidden'); 
-            userNav.style.display = 'flex'; // Forteaza afisarea flex
-        }
-        
-        document.getElementById('nav-name').innerText = user.name ? user.name.split(' ')[0] : 'User';
-        document.getElementById('nav-avatar').src = user.picture || 'https://via.placeholder.com/150';
-        
-        currentVoiceCharacters = user.voice_characters || 0;
-        const navCharsEl = document.getElementById('nav-chars');
-        if (navCharsEl) {
-            navCharsEl.innerText = currentVoiceCharacters.toLocaleString('ro-RO');
-        }
-        
-        // Verifica fondurile doar daca ai un text introdus in momentul logarii
-        if (document.getElementById('script-input') && document.getElementById('script-input').value.length > 0) {
-             checkFunds();
-        }
-    }
-
-    function logout() { removeToken(); location.reload(); }
-
-    window.onload = async () => {
-        updateSlider('stab'); 
-        updateSlider('sim');
-        updateSlider('speed');
-        renderHistory();
-        
-        const token = getToken();
-        if(token) {
-            try {
-                const res = await fetch('/api/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
-                if(res.ok) { 
-                    const data = await res.json(); 
-                    updateUI(data.user); 
-                } else { 
-                    removeToken(); 
-                }
-            } catch (e) {
-                console.error("Eroare verificare token onload:", e);
-            }
-        }
-    };
-
-    // --- 2. TABS LOGIC ---
-    function switchTab(tab) {
-        const btnSettings = document.getElementById('tab-btn-settings');
-        const btnHistory = document.getElementById('tab-btn-history');
-        const contentSettings = document.getElementById('tab-settings');
-        const contentHistory = document.getElementById('tab-history');
-
-        if(tab === 'settings') {
-            btnSettings.className = "flex-1 py-3 text-sm font-black border-b-2 border-viralio-600 text-viralio-600 transition-all";
-            btnHistory.className = "flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-all";
-            contentSettings.classList.remove('hidden'); contentSettings.classList.add('flex');
-            contentHistory.classList.add('hidden'); contentHistory.classList.remove('flex');
-        } else {
-            btnHistory.className = "flex-1 py-3 text-sm font-black border-b-2 border-viralio-600 text-viralio-600 transition-all";
-            btnSettings.className = "flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-all";
-            contentHistory.classList.remove('hidden'); contentHistory.classList.add('flex');
-            contentSettings.classList.add('hidden'); contentSettings.classList.remove('flex');
-        }
-    }
-
-    // --- 3. SLIDERS LOGIC ---
-    function updateSlider(id) {
-        const inputEl = document.getElementById(`param-${id}`);
-        if(!inputEl) return;
-        
-        const val = parseFloat(inputEl.value);
-        const prog = document.getElementById(`prog-${id}`);
-        const display = document.getElementById(`${id}-val`);
-
-        if (id === 'speed') {
-            display.innerText = val.toFixed(2) + 'x';
-            const percent = ((val - 0.7) / (1.2 - 0.7)) * 100;
-            if(prog) prog.style.width = percent + '%';
-        } else {
-            if(display) display.innerText = val + '%';
-            if(prog) prog.style.width = val + '%';
-        }
-    }
-
-    // --- 4. VOCILE PE CATEGORII (ACTUALIZAT COMPLET) ---
-    const voiceCategories = {
-        "Voci Masculine (Povești/Viral)": [
-            {name: "Paul", personality: "Documentar, Jurnalistic", preview: "/assets/previews/paul.mp3"},
-            {name: "Drew", personality: "Tânăr, Știri, Prietenos", preview: "/assets/previews/drew.mp3"},
-            {name: "Clyde", personality: "Profund, Dramatic", preview: "/assets/previews/clyde.mp3"},
-            {name: "Dave", personality: "Casual, Conversație", preview: "/assets/previews/dave.mp3"},
-            {name: "Roger", personality: "Matur, Autoritar", preview: "/assets/previews/roger.mp3"},
-            {name: "Fin", personality: "Energic, Vlog", preview: "/assets/previews/fin.mp3"},
-            {name: "James", personality: "Calm, Podcast", preview: "/assets/previews/james.mp3"},
-            {name: "Bradford", personality: "Bătrân, Înțelept", preview: "/assets/previews/bradford.mp3"},
-            {name: "Reginald", personality: "Tradițional", preview: "/assets/previews/reginald.mp3"},
-            {name: "Austin", personality: "Modern, Chill", preview: "/assets/previews/austin.mp3"},
-            {name: "Mark", personality: "Serios, Afaceri", preview: "/assets/previews/mark.mp3"},
-            {name: "Grimblewood", personality: "Fantezie, Narator", preview: "/assets/previews/grimblewood.mp3"}
-        ],
-        "Voci Feminine (Povești/Viral)": [
-            {name: "Rachel", personality: "Eleganta, Clara", preview: "/assets/previews/rachel.mp3"},
-            {name: "Aria", personality: "Tânăra, Dinamică", preview: "/assets/previews/aria.mp3"},
-            {name: "Domi", personality: "Matură, ASMR", preview: "/assets/previews/domi.mp3"},
-            {name: "Sarah", personality: "Prietenos, Comercial", preview: "/assets/previews/sarah.mp3"},
-            {name: "Jane", personality: "Calmă, Educațional", preview: "/assets/previews/jane.mp3"},
-            {name: "Juniper", personality: "Exuberantă, Vlog", preview: "/assets/previews/juniper.mp3"},
-            {name: "Arabella", personality: "Artistică, Povești", preview: "/assets/previews/arabella.mp3"},
-            {name: "Hope", personality: "Inocență, Caldă", preview: "/assets/previews/hope.mp3"},
-            {name: "Blondie", personality: "Casual, Social Media", preview: "/assets/previews/blondie.mp3"},
-            {name: "Priyanka", personality: "Clară, Știri", preview: "/assets/previews/priyanka.mp3"},
-            {name: "Alexandra", personality: "Serioasă, Documentar", preview: "/assets/previews/alexandra.mp3"},
-            {name: "Monika", personality: "Tânără, Relaxată", preview: "/assets/previews/monika.mp3"}
-        ],
-        "Personaje Speciale": [
-            {name: "Gaming", personality: "Epic, Trailer Video", preview: "/assets/previews/gaming.mp3"},
-            {name: "Kuon", personality: "Misterios, Închis", preview: "/assets/previews/kuon.mp3"}
-        ]
-    };
-    
-    let activeVoice = "Paul";
-    const listEl = document.getElementById('voice-list');
-    const badgeMap = {"Voci Masculine (Povești/Viral)": "MASCULIN", "Voci Feminine (Povești/Viral)": "FEMININ", "Personaje Speciale": "SPECIAL"};
-
-    if(listEl) {
-        Object.keys(voiceCategories).forEach(category => {
-            const header = document.createElement('div');
-            header.className = "px-3 py-2 bg-slate-50 text-[0.65rem] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10 border-y border-slate-100 shadow-[0_2px_5px_rgba(0,0,0,0.02)]";
-            header.innerText = category;
-            listEl.appendChild(header);
-
-            voiceCategories[category].forEach(voiceObj => {
-                const div = document.createElement('div');
-                div.className = `voice-option px-4 py-2.5 flex items-center justify-between cursor-pointer transition-colors ${voiceObj.name === 'Paul' ? 'bg-indigo-50 border-l-2 border-indigo-500' : 'bg-white border-l-2 border-transparent hover:bg-slate-50'}`;
-                
-                const colors = ['bg-slate-900', 'bg-pink-500', 'bg-emerald-500', 'bg-amber-500', 'bg-indigo-500'];
-                const color = colors[voiceObj.name.length % colors.length];
-
-                div.innerHTML = `
-                    <div class="flex items-center gap-3 flex-1" onclick="selectVoice('${voiceObj.name}', '${badgeMap[category]}, ${voiceObj.personality}', this)">
-                        <div class="w-8 h-8 rounded-full ${color} text-white flex items-center justify-center text-[0.65rem] font-bold shrink-0 shadow-sm">${voiceObj.name.substring(0,2).toUpperCase()}</div>
-                        <div class="text-left">
-                            <span class="text-sm font-bold text-slate-800 block leading-tight">${voiceObj.name}</span>
-                            <span class="text-[0.6rem] font-medium text-slate-400">${voiceObj.personality}</span>
-                        </div>
-                    </div>
-                    <button onclick="playPreview(event, '${voiceObj.preview}', this)" class="preview-btn w-8 h-8 rounded-full border border-slate-200 text-slate-400 flex items-center justify-center shrink-0 shadow-sm bg-white">
-                        <i class="fa-solid fa-play text-xs ml-0.5"></i>
-                    </button>
-                `;
-                listEl.appendChild(div);
-            });
-        });
-    }
-
-    const previewAudioPlayer = document.getElementById('preview-audio');
-    let currentPreviewButton = null;
-
-    function playPreview(event, url, btn) {
-        event.stopPropagation();
-
-        if (currentPreviewButton === btn && !previewAudioPlayer.paused) {
-            previewAudioPlayer.pause();
-            btn.innerHTML = '<i class="fa-solid fa-play text-xs ml-0.5"></i>';
-            btn.classList.remove('bg-indigo-100', 'text-indigo-600', 'border-indigo-300');
-            return;
-        }
-
-        document.querySelectorAll('.preview-btn').forEach(b => {
-            b.innerHTML = '<i class="fa-solid fa-play text-xs ml-0.5"></i>';
-            b.classList.remove('bg-indigo-100', 'text-indigo-600', 'border-indigo-300');
-        });
-
-        previewAudioPlayer.src = url;
-        previewAudioPlayer.play().catch(e => console.error("Nu se poate reda preview:", e));
-        
-        btn.innerHTML = '<i class="fa-solid fa-pause text-xs"></i>';
-        btn.classList.add('bg-indigo-100', 'text-indigo-600', 'border-indigo-300');
-        currentPreviewButton = btn;
-
-        previewAudioPlayer.onended = () => {
-            btn.innerHTML = '<i class="fa-solid fa-play text-xs ml-0.5"></i>';
-            btn.classList.remove('bg-indigo-100', 'text-indigo-600', 'border-indigo-300');
-        };
-    }
-
-    function toggleVoiceDropdown() { 
-        const drop = document.getElementById('voice-dropdown');
-        if(drop) drop.classList.toggle('show'); 
-    }
-
-    function selectVoice(voice, badgeText, element) {
-        activeVoice = voice;
-        document.getElementById('active-voice-name').innerText = voice;
-        document.getElementById('active-voice-avatar').innerText = voice.substring(0,2).toUpperCase();
-        document.getElementById('active-voice-badge').innerText = badgeText;
-        
-        const colors = ['bg-slate-900', 'bg-pink-500', 'bg-emerald-500', 'bg-amber-500', 'bg-indigo-500'];
-        document.getElementById('active-voice-avatar').className = `w-8 h-8 rounded-full ${colors[voice.length % colors.length]} flex items-center justify-center text-xs font-bold text-white shadow-sm`;
-
-        document.querySelectorAll('.voice-option').forEach(el => { el.classList.remove('bg-indigo-50', 'border-indigo-500'); el.classList.add('bg-white', 'border-transparent'); });
-        element.classList.add('bg-indigo-50', 'border-indigo-500');
-        element.classList.remove('bg-white', 'border-transparent');
-        
-        toggleVoiceDropdown();
-    }
-
-    document.addEventListener('click', (e) => {
-        const cont = document.getElementById('voice-selector-container');
-        if (cont && !e.target.closest('#voice-selector-container')) { 
-            const drop = document.getElementById('voice-dropdown');
-            if(drop) drop.classList.remove('show'); 
-        }
-    });
-
-// --- 5. EDITOR & CREDITE ---
-    const textInput = document.getElementById('script-input');
-    
-    // Funcție unificată pentru a număra DOAR literele, cifrele și semnele de punctuație de bază
-    // Ignoră complet spațiile (\s) și enter-urile
-    function getRealCharCount(text) {
-        const textWithoutSpaces = text.replace(/\s+/g, '');
-        return textWithoutSpaces.length;
-    }
-
-    function checkFunds() {
-        if(!textInput) return;
-        const realCost = getRealCharCount(textInput.value);
-        const costContainer = document.getElementById('cost-container');
-        if(!costContainer) return;
-        
-        if(getToken() && realCost > currentVoiceCharacters) {
-            costContainer.classList.replace('text-amber-500', 'text-red-500');
-        } else {
-            costContainer.classList.replace('text-red-500', 'text-amber-500');
-        }
-    }
-
-    if(textInput) {
-        textInput.addEventListener('input', () => {
-            let text = textInput.value;
-            // Păstrăm limita fizică a textarea-ului la 5000 caractere TOTALE (inclusiv spații) pentru a nu bloca API-ul
-            if(text.length > 5000) { textInput.value = text.substring(0, 5000); text = textInput.value; }
-            
-            // Calculăm costul REAL (fără spații)
-            const realCost = getRealCharCount(text);
-            
-            // Afișăm în UI
-            document.getElementById('char-count').innerText = realCost;
-            document.getElementById('char-count').className = realCost > 4500 ? 'text-red-500 font-black' : 'text-viralio-600 font-black';
-            
-            document.getElementById('char-cost').innerText = realCost.toLocaleString('ro-RO');
-            checkFunds();
-        });
-    }
-
-    function clearText() { 
-        if(textInput) {
-            textInput.value = ''; 
-            textInput.dispatchEvent(new Event('input')); 
-        }
-    }
-    
-    async function pasteText() { 
-        try { 
-            if(textInput) {
-                textInput.value += await navigator.clipboard.readText(); 
-                textInput.dispatchEvent(new Event('input')); 
-            }
-        } catch(e){} 
-    }
-
-    // --- 6. API GENERARE AUDIO ---
-    async function processAudio() {
-        const token = getToken();
-        if(!token) { openLoginModal(); return; }
-
-        if(!textInput) return;
-        const text = textInput.value.trim();
-        if(!text) return alert("Scrie text pentru a genera vocea.");
-        
-        const cost = getRealCharCount(text);
-        if(cost > currentVoiceCharacters) {
-            alert(`Nu ai suficiente caractere! Ai nevoie de ${cost}, dar mai ai doar ${currentVoiceCharacters}.`);
-            return;
-        }
-
-        const btn = document.getElementById('generateBtn');
-        if(btn) {
-            btn.classList.add('is-generating');
-            btn.disabled = true;
-        }
-
-        try {
-            if(previewAudioPlayer && !previewAudioPlayer.paused) previewAudioPlayer.pause();
-
-            const res = await fetch('/api/generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ 
-                    text: text, 
-                    voice: activeVoice,
-                    stability: parseFloat(document.getElementById('param-stab').value) / 100,
-                    similarity_boost: parseFloat(document.getElementById('param-sim').value) / 100,
-                    speed: parseFloat(document.getElementById('param-speed').value)
-                })
-            });
-
-            const data = await res.json();
-            if(!res.ok) throw new Error(data.error || "Eroare la generare.");
-
-            launchPlayer(data.audioUrl, activeVoice, text);
-            addToHistory(text, activeVoice, data.audioUrl);
-
-            currentVoiceCharacters = data.remaining_chars || (currentVoiceCharacters - cost);
-            const charNav = document.getElementById('nav-chars');
-            if(charNav) charNav.innerText = currentVoiceCharacters.toLocaleString('ro-RO');
-            checkFunds(); 
-
-        } catch (e) {
-            alert(e.message);
-        } finally {
-            if(btn) {
-                btn.classList.remove('is-generating');
-                btn.disabled = false;
-            }
-        }
-    }
-
-    // --- 7. AUDIO PLAYER & TIMERS ---
-    const audio = document.getElementById('core-audio');
-    const playerBar = document.getElementById('player-bar');
-    const playBtn = document.getElementById('player-play-btn');
-    const playBtnIcon = playBtn ? playBtn.querySelector('i') : null;
-    const trackFill = document.getElementById('track-fill');
-    const eqContainer = document.getElementById('eq-container');
-
-    function formatTime(secs) {
-        if (isNaN(secs)) return "0:00";
-        const m = Math.floor(secs / 60);
-        const s = Math.floor(secs % 60);
-        return `${m}:${s < 10 ? '0' : ''}${s}`;
-    }
-
-    function launchPlayer(url, voiceName, text) {
-        if(!audio || !playerBar) return;
-        audio.src = url;
-        const dlBtn = document.getElementById('download-btn');
-        if(dlBtn) dlBtn.href = url;
-        const pt = document.getElementById('nowPlayingText');
-        if(pt) pt.innerText = `${voiceName} citește: "${text.substring(0, 30)}..."`;
-        playerBar.style.transform = 'translate(-50%, 0)';
-        audio.play().catch(e => console.error("Playback stopped:", e));
-    }
-
-    function closePlayer() {
-        if(audio) audio.pause();
-        if(playerBar) playerBar.style.transform = 'translate(-50%, 150%)';
-    }
-
-    if(playBtn) {
-        playBtn.onclick = () => audio.paused ? audio.play() : audio.pause();
-    }
-    
-    if(audio) {
-        audio.onloadedmetadata = () => { 
-            const tt = document.getElementById('time-total');
-            if(tt) tt.innerText = formatTime(audio.duration); 
-        };
-        audio.onplay = () => { 
-            if(playBtnIcon) playBtnIcon.className = "fa-solid fa-pause"; 
-            if(eqContainer) eqContainer.classList.add('playing'); 
-        };
-        audio.onpause = () => { 
-            if(playBtnIcon) playBtnIcon.className = "fa-solid fa-play ml-1"; 
-            if(eqContainer) eqContainer.classList.remove('playing'); 
-        };
-        audio.onended = () => { 
-            if(playBtnIcon) playBtnIcon.className = "fa-solid fa-play ml-1"; 
-            if(eqContainer) eqContainer.classList.remove('playing'); 
-            if(trackFill) trackFill.style.width = '0%'; 
-            const tc = document.getElementById('time-current');
-            if(tc) tc.innerText = "0:00"; 
-        };
-        
-        audio.ontimeupdate = () => { 
-            if(audio.duration) {
-                if(trackFill) trackFill.style.width = (audio.currentTime / audio.duration * 100) + '%'; 
-                const tc = document.getElementById('time-current');
-                if(tc) tc.innerText = formatTime(audio.currentTime);
-            }
-        };
-    }
-    
-    function seekTrack(e) {
-        const bg = document.getElementById('track-bg');
-        if(!bg || !audio) return;
-        const rect = bg.getBoundingClientRect();
-        audio.currentTime = ((e.clientX - rect.left) / rect.width) * audio.duration;
-    }
-
-    // --- 8. ISTORIC ---
-    function addToHistory(text, voice, url) {
-        const box = document.getElementById('history-box');
-        if(!box) return;
-        if(box.querySelector('#empty-history')) box.innerHTML = '';
-        
-        const hist = JSON.parse(localStorage.getItem('viralio_voice_hist') || '[]');
-        hist.unshift({ text: text.substring(0, 60), voice, url, time: new Date().toLocaleTimeString('ro-RO', {hour:'2-digit', minute:'2-digit'}) });
-        if(hist.length > 20) hist.pop();
-        localStorage.setItem('viralio_voice_hist', JSON.stringify(hist));
-        
-        renderHistory();
-    }
-
-    function renderHistory() {
-        const hist = JSON.parse(localStorage.getItem('viralio_voice_hist') || '[]');
-        const box = document.getElementById('history-box');
-        if(!box) return;
-        if(hist.length === 0) return;
-        
-        box.innerHTML = '';
-        hist.forEach(h => {
-            const el = document.createElement('div');
-            el.className = "p-3 bg-slate-50 border border-slate-100 rounded-xl hover:border-viralio-200 transition-all group flex items-center justify-between gap-3 shadow-sm";
-            
-            el.innerHTML = `
-                <button onclick="launchPlayer('${h.url}', '${h.voice}', '${h.text.replace(/'/g, "\\'")}')" class="w-9 h-9 shrink-0 rounded-full bg-white shadow-md flex items-center justify-center text-slate-600 group-hover:bg-viralio-600 group-hover:text-white transition-all border border-slate-100">
-                    <i class="fa-solid fa-play text-[0.7rem] ml-0.5"></i>
-                </button>
-                <div class="flex-1 overflow-hidden cursor-pointer" onclick="launchPlayer('${h.url}', '${h.voice}', '${h.text.replace(/'/g, "\\'")}')">
-                    <p class="text-xs font-bold text-slate-800 truncate">${h.text}...</p>
-                    <p class="text-[0.65rem] font-bold text-slate-400 mt-0.5"><span class="text-indigo-500">${h.voice}</span> • ${h.time}</p>
-                </div>
-                <a href="${h.url}" download="viralio_voice.mp3" class="w-8 h-8 shrink-0 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-500 transition-all" title="Descarcă MP3">
-                    <i class="fa-solid fa-download text-xs"></i>
-                </a>
-            `;
-            box.appendChild(el);
-        });
-    }
-
-    function clearHistory() {
-        localStorage.removeItem('viralio_voice_hist');
-        const box = document.getElementById('history-box');
-        if(box) box.innerHTML = '<div class="text-center text-slate-400 text-sm font-medium py-10" id="empty-history">Nu ai generat nimic încă.</div>';
-    }
-</script>
-<style>
-    @keyframes premiumShine {
-        0% { transform: translateX(-150%) skewX(-20deg); opacity: 0; }
-        20% { opacity: 1; }
-        80% { opacity: 1; }
-        100% { transform: translateX(250%) skewX(-20deg); opacity: 0; }
-    }
-    .animate-shine-fast { animation: premiumShine 2.5s infinite cubic-bezier(0.4, 0, 0.2, 1); }
-    .glass-premium-fin { box-shadow: 0 10px 30px -10px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.8); }
-</style>
-
+<!-- SOCIAL FLOAT -->
 <div class="fixed bottom-5 right-5 md:right-6 z-[100000] flex items-center bg-white/70 backdrop-blur-2xl glass-premium-fin rounded-full p-1.5 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_15px_40px_-10px_rgba(0,0,0,0.2)] hover:bg-white/90">
-    
     <a href="https://discord.gg/h8Ah6VKDzm" target="_blank" class="group flex items-center gap-2 hover:bg-slate-100 rounded-full px-3 py-1.5 transition-all duration-300">
         <div class="flex items-center justify-center w-10 h-10 rounded-full bg-slate-900 text-white shadow-sm group-hover:bg-[#5865F2] group-hover:scale-105 transition-all duration-300">
             <i class="fa-brands fa-discord text-sm"></i>
@@ -783,28 +290,469 @@
             <span class="text-xs font-black text-slate-800 leading-none group-hover:text-black transition-colors duration-300">Suport Discord</span>
         </div>
     </a>
-
     <div class="w-px h-6 bg-gradient-to-b from-transparent via-slate-300 to-transparent mx-1"></div>
-
     <a href="https://t.me/SmartCreator_official" target="_blank" class="group flex items-center gap-2 rounded-full px-3 py-1.5 transition-all duration-300">
-        
         <div class="relative flex items-center justify-center w-10 h-10 group-hover:scale-110 transition-transform duration-300">
-            
             <div class="absolute inset-0 rounded-full bg-gradient-to-br from-[#0088cc] to-[#00aaff] overflow-hidden shadow-[0_0_15px_rgba(0,136,204,0.4)]">
                 <div class="absolute inset-0 w-[250%] h-full bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shine-fast z-10"></div>
             </div>
-            
             <i class="fa-brands fa-telegram text-white text-sm pr-0.5 relative z-20"></i>
-            
             <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse z-30 shadow-sm"></span>
         </div>
-        
         <div class="flex-col hidden sm:flex text-left">
             <span class="text-[0.55rem] font-bold text-red-500 uppercase tracking-widest leading-none mb-0.5 drop-shadow-sm">Giveaways</span>
             <span class="text-xs font-black text-slate-800 leading-none group-hover:text-[#0088cc] transition-colors duration-300">Telegram VIP</span>
         </div>
     </a>
-
 </div>
+
+<audio id="core-audio" class="hidden"></audio>
+<audio id="preview-audio" class="hidden"></audio>
+
+<!-- ══════════════════════════════════════════════════════════
+     VOICE MODAL — Ultra Dark Premium
+══════════════════════════════════════════════════════════ -->
+<div id="vm-overlay" class="vm-overlay">
+  <div class="vm-sheet" role="dialog" aria-modal="true">
+
+    <!-- Header -->
+    <div class="vm-header">
+      <div class="vm-header-left">
+        <div class="vm-header-icon"><i class="fa-solid fa-waveform-lines"></i></div>
+        <div>
+          <div class="vm-header-title">Alege Vocea</div>
+          <div class="vm-header-sub"><span id="vm-result-count">—</span> voci disponibile · ElevenLabs AI</div>
+        </div>
+      </div>
+      <button class="vm-close-btn" onclick="closeVoiceModal()" title="Închide"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <!-- Search + Filters -->
+    <div class="vm-controls">
+      <div class="vm-search-wrap">
+        <i class="fa-solid fa-magnifying-glass vm-search-icon"></i>
+        <input id="vm-search-input" class="vm-search" placeholder="Caută după nume, stil, accent..." autocomplete="off" spellcheck="false">
+        <span class="vm-search-kbd">⌘K</span>
+      </div>
+      <div class="vm-filters" role="group">
+        <button class="vmf vmf-on" data-f="all"     onclick="setVmFilter('all')">⚡ Toate</button>
+        <button class="vmf" data-f="male"    onclick="setVmFilter('male')">♂ Masculine</button>
+        <button class="vmf" data-f="female"  onclick="setVmFilter('female')">♀ Feminine</button>
+        <button class="vmf" data-f="young"   onclick="setVmFilter('young')">🔥 Tineri</button>
+        <button class="vmf" data-f="mature"  onclick="setVmFilter('mature')">🎙 Maturi</button>
+        <button class="vmf" data-f="shared"  onclick="setVmFilter('shared')">🌐 Comunitate</button>
+        <button class="vmf" data-f="special" onclick="setVmFilter('special')">✨ Speciale</button>
+        <button class="vmf" data-f="american"  onclick="setVmFilter('american')">🇺🇸 American</button>
+        <button class="vmf" data-f="british"   onclick="setVmFilter('british')">🇬🇧 British</button>
+        <button class="vmf" data-f="australian" onclick="setVmFilter('australian')">🇦🇺 Australian</button>
+        <button class="vmf" data-f="spanish"   onclick="setVmFilter('spanish')">🇪🇸 Spanish</button>
+        <button class="vmf" data-f="french"    onclick="setVmFilter('french')">🇫🇷 French</button>
+        <button class="vmf" data-f="indian"    onclick="setVmFilter('indian')">🇮🇳 Indian</button>
+      </div>
+    </div>
+
+    <!-- Stats bar -->
+    <div class="vm-stats-bar">
+      <span class="vm-result-count" id="vm-count-label">— voci</span>
+      <div class="vm-sort-btns">
+        <button class="vm-sort-btn active" id="sort-az" onclick="setSortMode('az')">A→Z</button>
+        <button class="vm-sort-btn" id="sort-gender" onclick="setSortMode('gender')">Gen</button>
+        <button class="vm-sort-btn" id="sort-use" onclick="setSortMode('use')">Utilizare</button>
+      </div>
+    </div>
+
+    <!-- Grid -->
+    <div class="vm-body">
+      <div id="vm-grid" class="vm-grid"></div>
+      <div id="vm-empty" class="vm-empty">
+        <div class="vm-empty-icon"><i class="fa-solid fa-face-meh"></i></div>
+        <div class="vm-empty-title">Nicio voce găsită</div>
+        <div class="vm-empty-sub">Încearcă alt termen de căutare</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Voice data (external file) -->
+<script src="/voices.js"></script>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  1. AUTH
+// ══════════════════════════════════════════════════════════════
+function setToken(t){ document.cookie=`viralio_token=${t}; domain=.viralio.ro; path=/; max-age=604800; Secure; SameSite=Lax`; }
+function getToken(){ const m=document.cookie.match(/(?:^|; )viralio_token=([^;]*)/); return m?m[1]:null; }
+function removeToken(){ document.cookie='viralio_token=; domain=.viralio.ro; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'; }
+function openLoginModal(){ document.getElementById('login-modal').classList.add('show'); }
+function closeLoginModal(){ document.getElementById('login-modal').classList.remove('show'); }
+
+window.handleCredentialResponse = async function(response){
+    try {
+        const res = await fetch('/api/auth/google',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({credential:response.credential}) });
+        const data = await res.json();
+        if(data.token){ setToken(data.token); closeLoginModal(); updateUI(data.user); }
+        else alert("Eroare la conectare. Serverul nu a returnat token.");
+    } catch(e){ alert('Eroare conexiune server.'); }
+};
+
+let currentVoiceCharacters = 0;
+function updateUI(user){
+    const lb = document.getElementById('login-top-btn');
+    if(lb) lb.style.display='none';
+    const up = document.getElementById('user-profile');
+    if(up){ up.classList.remove('hidden'); up.style.display='flex'; }
+    document.getElementById('nav-name').innerText = user.name?user.name.split(' ')[0]:'User';
+    document.getElementById('nav-avatar').src = user.picture||'';
+    currentVoiceCharacters = user.voice_characters||0;
+    const nc = document.getElementById('nav-chars');
+    if(nc) nc.innerText = currentVoiceCharacters.toLocaleString('ro-RO');
+    const si = document.getElementById('script-input');
+    if(si && si.value.length>0) checkFunds();
+}
+function logout(){ removeToken(); location.reload(); }
+
+window.onload = async()=>{
+    updateSlider('stab'); updateSlider('sim'); updateSlider('speed');
+    renderHistory();
+    // update voice count badge
+    document.getElementById('voice-count-badge').innerText = ALL_VOICES.length+' voci';
+    document.getElementById('vm-result-count').innerText = ALL_VOICES.length;
+    const token=getToken();
+    if(token){
+        try{
+            const res=await fetch('/api/auth/me',{headers:{'Authorization':`Bearer ${token}`}});
+            if(res.ok){ const data=await res.json(); updateUI(data.user); }
+            else removeToken();
+        }catch(e){ console.error(e); }
+    }
+};
+
+// ══════════════════════════════════════════════════════════════
+//  2. TABS
+// ══════════════════════════════════════════════════════════════
+function switchTab(tab){
+    const BS=document.getElementById('tab-btn-settings'), BH=document.getElementById('tab-btn-history');
+    const CS=document.getElementById('tab-settings'), CH=document.getElementById('tab-history');
+    if(tab==='settings'){
+        BS.className='flex-1 py-3 text-sm font-black border-b-2 border-viralio-600 text-viralio-600 transition-all';
+        BH.className='flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-all';
+        CS.classList.remove('hidden'); CS.classList.add('flex');
+        CH.classList.add('hidden'); CH.classList.remove('flex');
+    } else {
+        BH.className='flex-1 py-3 text-sm font-black border-b-2 border-viralio-600 text-viralio-600 transition-all';
+        BS.className='flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-all';
+        CH.classList.remove('hidden'); CH.classList.add('flex');
+        CS.classList.add('hidden'); CS.classList.remove('flex');
+    }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  3. SLIDERS
+// ══════════════════════════════════════════════════════════════
+function updateSlider(id){
+    const el=document.getElementById(`param-${id}`); if(!el) return;
+    const val=parseFloat(el.value);
+    const prog=document.getElementById(`prog-${id}`);
+    const disp=document.getElementById(`${id}-val`);
+    if(id==='speed'){
+        if(disp) disp.innerText=val.toFixed(2)+'x';
+        const pct=((val-0.7)/(1.2-0.7))*100;
+        if(prog) prog.style.width=pct+'%';
+    } else {
+        if(disp) disp.innerText=val+'%';
+        if(prog) prog.style.width=val+'%';
+    }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  4. VOICE MODAL
+// ══════════════════════════════════════════════════════════════
+let activeVoice   = 'Roger';
+let activeVoiceId = 'CwhRBWXzGAHq8TQ4Fs17';
+let vmFilter = 'all';
+let vmSearch = '';
+let vmSort   = 'az';
+let previewAudio = null;
+let previewActiveId = null;
+
+function openVoiceModal(){
+    document.getElementById('vm-overlay').classList.add('vm-open');
+    document.body.style.overflow='hidden';
+    vmSearch='';
+    document.getElementById('vm-search-input').value='';
+    setVmFilter('all', false);
+    renderVoiceGrid();
+    setTimeout(()=>{ const s=document.getElementById('vm-search-input'); if(s) s.focus(); },350);
+}
+function closeVoiceModal(){
+    document.getElementById('vm-overlay').classList.remove('vm-open');
+    document.body.style.overflow='';
+    stopPreview();
+}
+
+function setVmFilter(f, render=true){
+    vmFilter=f;
+    document.querySelectorAll('.vmf').forEach(b=>b.classList.toggle('vmf-on', b.dataset.f===f));
+    if(render) renderVoiceGrid();
+}
+
+function setSortMode(mode){
+    vmSort=mode;
+    document.querySelectorAll('.vm-sort-btn').forEach(b=>b.classList.remove('active'));
+    const btn=document.getElementById(`sort-${mode}`); if(btn) btn.classList.add('active');
+    renderVoiceGrid();
+}
+
+function stopPreview(){
+    if(previewAudio){ previewAudio.pause(); previewAudio=null; }
+    if(previewActiveId){
+        const btn=document.querySelector(`.vm-play-btn[data-vid="${previewActiveId}"]`);
+        if(btn){ btn.innerHTML='<i class="fa-solid fa-play" style="font-size:.6rem;margin-left:1px"></i>'; btn.classList.remove('playing'); }
+    }
+    previewActiveId=null;
+}
+
+function togglePreview(vid, btn){
+    if(previewActiveId===vid){ stopPreview(); return; }
+    stopPreview();
+    previewActiveId=vid;
+    const url=`https://api.ai33.pro/v1/voices/${vid}/preview`;
+    previewAudio=new Audio(url);
+    previewAudio.play().catch(()=>{});
+    btn.innerHTML='<i class="fa-solid fa-pause" style="font-size:.6rem"></i>';
+    btn.classList.add('playing');
+    previewAudio.onended=()=>{ btn.innerHTML='<i class="fa-solid fa-play" style="font-size:.6rem;margin-left:1px"></i>'; btn.classList.remove('playing'); previewActiveId=null; previewAudio=null; };
+}
+
+function renderVoiceGrid(){
+    const q=vmSearch.toLowerCase();
+    let list=[...ALL_VOICES];
+
+    // Filter by accent as well as tags
+    const accentFilters=['american','british','australian','spanish','french','indian','korean','japanese','german','italian','arabic','chinese','irish'];
+    if(accentFilters.includes(vmFilter))       list=list.filter(v=>v.accent===vmFilter);
+    else if(vmFilter==='male')    list=list.filter(v=>v.gender==='male');
+    else if(vmFilter==='female')  list=list.filter(v=>v.gender==='female');
+    else if(vmFilter==='special') list=list.filter(v=>v.gender==='special');
+    else if(vmFilter==='shared')  list=list.filter(v=>v.tags.includes('shared'));
+    else if(vmFilter==='young')   list=list.filter(v=>v.tags.includes('young'));
+    else if(vmFilter==='mature')  list=list.filter(v=>v.tags.includes('mature'));
+
+    if(q) list=list.filter(v=>v.name.toLowerCase().includes(q)||v.style.toLowerCase().includes(q)||v.accent.toLowerCase().includes(q));
+
+    // Sort
+    if(vmSort==='az')     list.sort((a,b)=>a.name.localeCompare(b.name));
+    else if(vmSort==='gender') list.sort((a,b)=>a.gender.localeCompare(b.gender)||a.name.localeCompare(b.name));
+    else if(vmSort==='use')    list.sort((a,b)=>a.use.localeCompare(b.use)||a.name.localeCompare(b.name));
+
+    const grid=document.getElementById('vm-grid');
+    const empty=document.getElementById('vm-empty');
+    const countEl=document.getElementById('vm-result-count');
+    const countLabel=document.getElementById('vm-count-label');
+    if(countEl) countEl.innerText=list.length;
+    if(countLabel) countLabel.innerText=list.length+' voci';
+
+    if(!list.length){
+        grid.innerHTML=''; empty.style.display='flex'; return;
+    }
+    empty.style.display='none';
+
+    grid.innerHTML=list.map((v,i)=>{
+        const col=vColor(v);
+        const initials=v.name.replace(/[^A-Za-zÀ-ž ]/g,'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||v.name.substring(0,2).toUpperCase();
+        const isActive=v.id===activeVoiceId;
+        const genderLabel=v.gender==='female'?'♀ Feminin':v.gender==='male'?'♂ Masculin':'✦ Special';
+        const genderClass=v.gender==='female'?'vm-g-f':v.gender==='male'?'vm-g-m':'vm-g-s';
+        const useLabel=USE_LABELS[v.use]||'⚡ General';
+        const delay=Math.min(i*0.015, 0.3);
+        return `<div class="vm-card${isActive?' vm-card-active':''}" 
+                     style="animation-delay:${delay}s"
+                     onclick="pickVoice('${v.name.replace(/'/g,"\\'")}','${v.id}','${v.style.replace(/'/g,"\\'")}','${v.gender}')">
+            <div class="vm-card-top">
+                <div class="vm-avatar" style="background:${col}" title="${v.accent}">${initials}</div>
+                <div class="vm-card-info">
+                    <div class="vm-card-name">${v.name}</div>
+                    <span class="vm-gender-badge ${genderClass}">${genderLabel}</span>
+                </div>
+                <button class="vm-play-btn${previewActiveId===v.id?' playing':''}" data-vid="${v.id}" 
+                        onclick="event.stopPropagation();togglePreview('${v.id}',this)" title="Preview voce">
+                    <i class="fa-solid ${previewActiveId===v.id?'fa-pause':'fa-play'}" style="font-size:.6rem;margin-left:${previewActiveId===v.id?'0':'1px'}"></i>
+                </button>
+            </div>
+            <div class="vm-style">${v.style}</div>
+            <div class="vm-use-pill">${useLabel}</div>
+            ${isActive?'<div class="vm-active-badge"><i class="fa-solid fa-check"></i> Activ</div>':''}
+        </div>`;
+    }).join('');
+}
+
+function pickVoice(name, vid, style, gender){
+    activeVoice=name; activeVoiceId=vid;
+    const nameEl=document.getElementById('active-voice-name');
+    const badgeEl=document.getElementById('active-voice-badge');
+    const avEl=document.getElementById('active-voice-avatar');
+    if(nameEl) nameEl.innerText=name;
+    if(badgeEl) badgeEl.innerText=style;
+    if(avEl){
+        const initials=name.replace(/[^A-Za-zÀ-ž ]/g,'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||name.substring(0,2).toUpperCase();
+        avEl.innerText=initials;
+        // Find voice object for color
+        const vo=ALL_VOICES.find(v=>v.id===vid);
+        avEl.style.background=vo?vColor(vo):'#6366f1';
+    }
+    stopPreview();
+    closeVoiceModal();
+}
+
+// Search & keyboard
+document.addEventListener('DOMContentLoaded',()=>{
+    const si=document.getElementById('vm-search-input');
+    if(si) si.addEventListener('input',e=>{ vmSearch=e.target.value; renderVoiceGrid(); });
+    document.getElementById('vm-overlay').addEventListener('click',e=>{ if(e.target===document.getElementById('vm-overlay')) closeVoiceModal(); });
+    document.addEventListener('keydown',e=>{
+        if((e.metaKey||e.ctrlKey)&&e.key==='k'){ e.preventDefault(); openVoiceModal(); }
+        if(e.key==='Escape') closeVoiceModal();
+    });
+    renderVoiceGrid();
+});
+
+// ══════════════════════════════════════════════════════════════
+//  5. EDITOR & CREDITE
+// ══════════════════════════════════════════════════════════════
+const textInput=document.getElementById('script-input');
+function getRealCharCount(text){ return text.replace(/\s+/g,'').length; }
+
+function checkFunds(){
+    if(!textInput) return;
+    const cost=getRealCharCount(textInput.value);
+    const cc=document.getElementById('cost-container');
+    if(!cc) return;
+    if(getToken()&&cost>currentVoiceCharacters) cc.classList.replace('text-amber-500','text-red-500');
+    else cc.classList.replace('text-red-500','text-amber-500');
+}
+
+if(textInput){
+    textInput.addEventListener('input',()=>{
+        let text=textInput.value;
+        if(text.length>5000){ textInput.value=text.substring(0,5000); text=textInput.value; }
+        const real=getRealCharCount(text);
+        const cc=document.getElementById('char-count');
+        if(cc){ cc.innerText=real; cc.className=real>4500?'text-red-500 font-black':'text-viralio-600 font-black'; }
+        const cco=document.getElementById('char-cost');
+        if(cco) cco.innerText=real.toLocaleString('ro-RO');
+        checkFunds();
+    });
+}
+
+function clearText(){ if(textInput){ textInput.value=''; textInput.dispatchEvent(new Event('input')); } }
+async function pasteText(){ try{ if(textInput){ textInput.value+=await navigator.clipboard.readText(); textInput.dispatchEvent(new Event('input')); } }catch(e){} }
+
+// ══════════════════════════════════════════════════════════════
+//  6. API GENERARE
+// ══════════════════════════════════════════════════════════════
+async function processAudio(){
+    const token=getToken();
+    if(!token){ openLoginModal(); return; }
+    if(!textInput) return;
+    const text=textInput.value.trim();
+    if(!text) return alert('Scrie text pentru a genera vocea.');
+    const cost=getRealCharCount(text);
+    if(cost>currentVoiceCharacters){ alert(`Nu ai suficiente caractere! Ai nevoie de ${cost}, dar mai ai doar ${currentVoiceCharacters}.`); return; }
+    const btn=document.getElementById('generateBtn');
+    if(btn){ btn.classList.add('is-generating'); btn.disabled=true; }
+    try{
+        const res=await fetch('/api/generate',{
+            method:'POST',
+            headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+            body:JSON.stringify({ text, voice:activeVoice, voiceId:activeVoiceId,
+                stability: parseFloat(document.getElementById('param-stab').value)/100,
+                similarity_boost: parseFloat(document.getElementById('param-sim').value)/100,
+                speed: parseFloat(document.getElementById('param-speed').value) })
+        });
+        const data=await res.json();
+        if(!res.ok) throw new Error(data.error||'Eroare la generare.');
+        launchPlayer(data.audioUrl, activeVoice, text);
+        addToHistory(text, activeVoice, data.audioUrl);
+        currentVoiceCharacters=data.remaining_chars||(currentVoiceCharacters-cost);
+        const nc=document.getElementById('nav-chars');
+        if(nc) nc.innerText=currentVoiceCharacters.toLocaleString('ro-RO');
+        checkFunds();
+    } catch(e){
+        alert(e.message);
+    } finally {
+        if(btn){ btn.classList.remove('is-generating'); btn.disabled=false; }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  7. PLAYER
+// ══════════════════════════════════════════════════════════════
+const audio=document.getElementById('core-audio');
+const playerBar=document.getElementById('player-bar');
+const playBtn=document.getElementById('player-play-btn');
+const playBtnIcon=playBtn?playBtn.querySelector('i'):null;
+const trackFill=document.getElementById('track-fill');
+const eqContainer=document.getElementById('eq-container');
+
+function formatTime(s){ if(isNaN(s))return'0:00'; const m=Math.floor(s/60),ss=Math.floor(s%60); return`${m}:${ss<10?'0':''}${ss}`; }
+
+function launchPlayer(url, voiceName, text){
+    if(!audio||!playerBar) return;
+    audio.src=url;
+    const dl=document.getElementById('download-btn'); if(dl) dl.href=url;
+    const pt=document.getElementById('nowPlayingText'); if(pt) pt.innerText=`${voiceName}: "${text.substring(0,30)}..."`;
+    playerBar.style.transform='translate(-50%, 0)';
+    audio.play().catch(e=>console.error(e));
+}
+function closePlayer(){ if(audio) audio.pause(); if(playerBar) playerBar.style.transform='translate(-50%, 150%)'; }
+if(playBtn) playBtn.onclick=()=>audio.paused?audio.play():audio.pause();
+if(audio){
+    audio.onloadedmetadata=()=>{ const tt=document.getElementById('time-total'); if(tt) tt.innerText=formatTime(audio.duration); };
+    audio.onplay=()=>{ if(playBtnIcon) playBtnIcon.className='fa-solid fa-pause'; if(eqContainer) eqContainer.classList.add('playing'); };
+    audio.onpause=()=>{ if(playBtnIcon) playBtnIcon.className='fa-solid fa-play ml-1'; if(eqContainer) eqContainer.classList.remove('playing'); };
+    audio.onended=()=>{ if(playBtnIcon) playBtnIcon.className='fa-solid fa-play ml-1'; if(eqContainer) eqContainer.classList.remove('playing'); if(trackFill) trackFill.style.width='0%'; const tc=document.getElementById('time-current'); if(tc) tc.innerText='0:00'; };
+    audio.ontimeupdate=()=>{ if(audio.duration){ if(trackFill) trackFill.style.width=(audio.currentTime/audio.duration*100)+'%'; const tc=document.getElementById('time-current'); if(tc) tc.innerText=formatTime(audio.currentTime); } };
+}
+function seekTrack(e){ const bg=document.getElementById('track-bg'); if(!bg||!audio) return; const r=bg.getBoundingClientRect(); audio.currentTime=((e.clientX-r.left)/r.width)*audio.duration; }
+
+// ══════════════════════════════════════════════════════════════
+//  8. ISTORIC
+// ══════════════════════════════════════════════════════════════
+function addToHistory(text, voice, url){
+    const box=document.getElementById('history-box'); if(!box) return;
+    if(box.querySelector('#empty-history')) box.innerHTML='';
+    const hist=JSON.parse(localStorage.getItem('viralio_voice_hist')||'[]');
+    hist.unshift({text:text.substring(0,60), voice, url, time:new Date().toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'})});
+    if(hist.length>20) hist.pop();
+    localStorage.setItem('viralio_voice_hist',JSON.stringify(hist));
+    renderHistory();
+}
+
+function renderHistory(){
+    const hist=JSON.parse(localStorage.getItem('viralio_voice_hist')||'[]');
+    const box=document.getElementById('history-box'); if(!box) return;
+    if(!hist.length) return;
+    box.innerHTML='';
+    hist.forEach(h=>{
+        const el=document.createElement('div');
+        el.className='p-3 bg-slate-50 border border-slate-100 rounded-xl hover:border-viralio-200 transition-all group flex items-center justify-between gap-3 shadow-sm';
+        el.innerHTML=`
+            <button onclick="launchPlayer('${h.url}','${h.voice}','${h.text.replace(/'/g,"\\'")}' )" class="w-9 h-9 shrink-0 rounded-full bg-white shadow-md flex items-center justify-center text-slate-600 group-hover:bg-viralio-600 group-hover:text-white transition-all border border-slate-100">
+                <i class="fa-solid fa-play text-[0.7rem] ml-0.5"></i>
+            </button>
+            <div class="flex-1 overflow-hidden cursor-pointer" onclick="launchPlayer('${h.url}','${h.voice}','${h.text.replace(/'/g,"\\'")}')">
+                <p class="text-xs font-bold text-slate-800 truncate">${h.text}...</p>
+                <p class="text-[0.65rem] font-bold text-slate-400 mt-0.5"><span class="text-indigo-500">${h.voice}</span> • ${h.time}</p>
+            </div>
+            <a href="${h.url}" download="viralio_voice.mp3" class="w-8 h-8 shrink-0 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-500 transition-all">
+                <i class="fa-solid fa-download text-xs"></i>
+            </a>`;
+        box.appendChild(el);
+    });
+}
+
+function clearHistory(){ localStorage.removeItem('viralio_voice_hist'); const box=document.getElementById('history-box'); if(box) box.innerHTML='<div class="text-center text-slate-400 text-sm font-medium py-10" id="empty-history">Nu ai generat nimic încă.</div>'; }
+</script>
 </body>
 </html>
