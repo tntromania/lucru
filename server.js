@@ -445,12 +445,14 @@ if (status === 2) {
 }
 
         if (status === 3) {
+            const rawMsg = data?.data?.message || '';
             console.error(`[WuyinPoll] status=3 REFUSED | data: ${JSON.stringify(data?.data)} | ${emailTag}`);
-            const rawMsg = data?.data?.message || data?.data?.msg || '';
-            const msg = rawMsg
-                ? `Generarea a eșuat: ${rawMsg}`
-                : 'Generarea a fost refuzată de AI (status=3). Promptul poate conține elemente blocate — încearcă să îl modifici.';
-            throw new Error(msg);
+            // Mesajul chinezesc = eroare internă server (nu refuz de conținut) → retry-ul va detecta asta
+            const isInternalError = rawMsg.includes('异常') || rawMsg.includes('请重新发起') || rawMsg === '';
+            const displayMsg = isInternalError
+                ? `生成过程中出现异常` // păstrăm mesajul original ca să-l detecteze retry-ul
+                : rawMsg;
+            throw new Error(displayMsg);
         }
 
         // status 0 sau 1 — încă se procesează
@@ -533,41 +535,77 @@ app.post('/api/media/video/fast',
                 requestBody = { prompt: finalPrompt, aspectRatio: videoRatio, size: '1080p' };
             }
 
-            console.log(`[Video] START | ratio=${videoRatio} cost=${totalCost} hasFrames=${hasFrames} | ${emailTag}`);
+            console.log(`[Video] START | ratio=${videoRatio} cost=${totalCost} hasFrames=${!!hasFrames} | ${emailTag}`);
             sendStatus('Se trimite cererea...');
 
-const submitRes = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Authorization': process.env.WUYIN_API_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify(requestBody)
-});
-
-const rawText = await submitRes.text(); // Citim răspunsul ca text mai întâi
-
-let submitData;
-try {
-    submitData = JSON.parse(rawText); // Încercăm să îl facem JSON
-} catch (parseError) {
-    // Dacă pică, înseamnă că am primit HTML/Eroare de la ei. Returnăm eroarea clară.
-    console.error(`[Video] Eroare parsare JSON de la Wuyin. Răspuns primit: ${rawText.substring(0, 200)}`);
-    return sendError(`Eroare comunicare API (a returnat HTML în loc de JSON). Cod HTTP: ${submitRes.status}`);
-}
-
-if (!submitRes.ok || submitData.code !== 200) {
-    return sendError(`Eroare server: ${submitData?.msg || submitData?.message || submitRes.status}`);
-}
-
-            const jobId = submitData?.data?.id;
-            if (!jobId) return sendError('Nu s-a primit ID job.');
-
-            sendStatus('Job trimis, se generează...');
-
+            // ✅ Retry automat până la 3 ori când Wuyin returnează eroare internă (status=3 cu excepție)
+            const WUYIN_INTERNAL_ERROR = '生成过程中出现异常';
+            const MAX_RETRIES = 3;
             let videoUrl;
-            try {
-                videoUrl = await pollWuyinResult(jobId, process.env.WUYIN_API_KEY, emailTag, sendStatus, abortController);
-            } catch (pollErr) {
-                if (pollErr.message === 'client_aborted') return;
-                return sendError(pollErr.message);
+            let lastError;
+
+            for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+                if (clientAborted || abortController.aborted) return;
+
+                if (attempt > 1) {
+                    const waitSec = attempt * 3;
+                    sendStatus(`Reîncercare ${attempt}/${MAX_RETRIES} în ${waitSec}s...`);
+                    console.log(`[Video] Retry ${attempt}/${MAX_RETRIES} după eroare internă Wuyin | ${emailTag}`);
+                    await new Promise(r => setTimeout(r, waitSec * 1000));
+                }
+
+                // Submit job
+                let submitData;
+                try {
+                    const submitRes = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Authorization': process.env.WUYIN_API_KEY, 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestBody)
+                    });
+                    const rawText = await submitRes.text();
+                    try {
+                        submitData = JSON.parse(rawText);
+                    } catch (parseError) {
+                        console.error(`[Video] Eroare parsare JSON Wuyin: ${rawText.substring(0, 200)}`);
+                        lastError = `Eroare comunicare API. Cod HTTP: ${submitRes.status}`;
+                        continue; // retry
+                    }
+                    if (!submitRes.ok || submitData.code !== 200) {
+                        lastError = `Eroare server: ${submitData?.msg || submitData?.message || submitRes.status}`;
+                        break; // nu are sens să reîncercăm erori de autentificare/parametri
+                    }
+                } catch (fetchErr) {
+                    lastError = `Eroare rețea: ${fetchErr.message}`;
+                    continue; // retry
+                }
+
+                const jobId = submitData?.data?.id;
+                if (!jobId) { lastError = 'Nu s-a primit ID job.'; break; }
+
+                sendStatus(attempt > 1 ? `Se generează (tentativa ${attempt})...` : 'Job trimis, se generează...');
+
+                // Poll result
+                try {
+                    videoUrl = await pollWuyinResult(jobId, process.env.WUYIN_API_KEY, emailTag, sendStatus, abortController);
+                    lastError = null;
+                    break; // ✅ Succes — ieșim din retry loop
+                } catch (pollErr) {
+                    if (pollErr.message === 'client_aborted') return;
+                    lastError = pollErr.message;
+                    // Reîncercăm doar dacă e eroare internă Wuyin (excepție server-side)
+                    if (!lastError.includes(WUYIN_INTERNAL_ERROR) && !lastError.includes('异常') && !lastError.includes('请重新发起')) {
+                        break; // Altă eroare (refuz conținut, timeout) — nu mai reîncercăm
+                    }
+                    console.log(`[Video] Eroare internă Wuyin detectată, voi reîncerca... | ${emailTag}`);
+                }
+            }
+
+            if (lastError) {
+                // Traducem eroarea internă Wuyin în română
+                const userMsg = (lastError.includes('异常') || lastError.includes('请重新发起') || lastError.includes('生成过程'))
+                    ? 'Serverul AI a întâmpinat o eroare internă după 3 încercări. Te rugăm să încerci din nou în câteva minute.'
+                    : lastError;
+                return sendError(userMsg);
             }
 
             if (clientAborted) return;
