@@ -445,14 +445,8 @@ if (status === 2) {
 }
 
         if (status === 3) {
-            const rawMsg = data?.data?.message || '';
-            console.error(`[WuyinPoll] status=3 REFUSED | data: ${JSON.stringify(data?.data)} | ${emailTag}`);
-            // Mesajul chinezesc = eroare internă server (nu refuz de conținut) → retry-ul va detecta asta
-            const isInternalError = rawMsg.includes('异常') || rawMsg.includes('请重新发起') || rawMsg === '';
-            const displayMsg = isInternalError
-                ? `生成过程中出现异常` // păstrăm mesajul original ca să-l detecteze retry-ul
-                : rawMsg;
-            throw new Error(displayMsg);
+            const msg = data?.data?.message || 'Generarea a eșuat.';
+            throw new Error(msg);
         }
 
         // status 0 sau 1 — încă se procesează
@@ -536,75 +530,44 @@ app.post('/api/media/video/fast',
             }
 
             console.log(`[Video] START | ratio=${videoRatio} cost=${totalCost} hasFrames=${!!hasFrames} | ${emailTag}`);
-            sendStatus('Se trimite cererea...');
+            sendStatus('Se generează... (poate dura 1-2 min)');
 
-            // ✅ Retry automat până la 3 ori când Wuyin returnează eroare internă (status=3 cu excepție)
-            const WUYIN_INTERNAL_ERROR = '生成过程中出现异常';
-            const MAX_RETRIES = 3;
-            let videoUrl;
-            let lastError;
-
-            for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-                if (clientAborted || abortController.aborted) return;
-
-                if (attempt > 1) {
-                    const waitSec = attempt * 3;
-                    sendStatus(`Reîncercare ${attempt}/${MAX_RETRIES} în ${waitSec}s...`);
-                    console.log(`[Video] Retry ${attempt}/${MAX_RETRIES} după eroare internă Wuyin | ${emailTag}`);
-                    await new Promise(r => setTimeout(r, waitSec * 1000));
-                }
-
-                // Submit job
+            // ✅ Funcție helper: submit un job Wuyin și poll până la rezultat
+            const submitAndPoll = async (slotId) => {
+                const submitRes = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Authorization': process.env.WUYIN_API_KEY, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+                const rawText = await submitRes.text();
                 let submitData;
-                try {
-                    const submitRes = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: { 'Authorization': process.env.WUYIN_API_KEY, 'Content-Type': 'application/json' },
-                        body: JSON.stringify(requestBody)
-                    });
-                    const rawText = await submitRes.text();
-                    try {
-                        submitData = JSON.parse(rawText);
-                    } catch (parseError) {
-                        console.error(`[Video] Eroare parsare JSON Wuyin: ${rawText.substring(0, 200)}`);
-                        lastError = `Eroare comunicare API. Cod HTTP: ${submitRes.status}`;
-                        continue; // retry
-                    }
-                    if (!submitRes.ok || submitData.code !== 200) {
-                        lastError = `Eroare server: ${submitData?.msg || submitData?.message || submitRes.status}`;
-                        break; // nu are sens să reîncercăm erori de autentificare/parametri
-                    }
-                } catch (fetchErr) {
-                    lastError = `Eroare rețea: ${fetchErr.message}`;
-                    continue; // retry
-                }
-
+                try { submitData = JSON.parse(rawText); }
+                catch { throw new Error(`Eroare parsare JSON (slot ${slotId}). HTTP: ${submitRes.status}`); }
+                if (!submitRes.ok || submitData.code !== 200)
+                    throw new Error(`Eroare API (slot ${slotId}): ${submitData?.msg || submitRes.status}`);
                 const jobId = submitData?.data?.id;
-                if (!jobId) { lastError = 'Nu s-a primit ID job.'; break; }
+                if (!jobId) throw new Error(`Fara ID job (slot ${slotId})`);
+                console.log(`[Video] Slot ${slotId} jobId=${jobId} | ${emailTag}`);
+                return await pollWuyinResult(jobId, process.env.WUYIN_API_KEY, emailTag, sendStatus, abortController);
+            };
 
-                sendStatus(attempt > 1 ? `Se generează (tentativa ${attempt})...` : 'Job trimis, se generează...');
-
-                // Poll result
-                try {
-                    videoUrl = await pollWuyinResult(jobId, process.env.WUYIN_API_KEY, emailTag, sendStatus, abortController);
-                    lastError = null;
-                    break; // ✅ Succes — ieșim din retry loop
-                } catch (pollErr) {
-                    if (pollErr.message === 'client_aborted') return;
-                    lastError = pollErr.message;
-                    // Reîncercăm doar dacă e eroare internă Wuyin (excepție server-side)
-                    if (!lastError.includes(WUYIN_INTERNAL_ERROR) && !lastError.includes('异常') && !lastError.includes('请重新发起')) {
-                        break; // Altă eroare (refuz conținut, timeout) — nu mai reîncercăm
-                    }
-                    console.log(`[Video] Eroare internă Wuyin detectată, voi reîncerca... | ${emailTag}`);
-                }
-            }
-
-            if (lastError) {
-                // Traducem eroarea internă Wuyin în română
-                const userMsg = (lastError.includes('异常') || lastError.includes('请重新发起') || lastError.includes('生成过程'))
-                    ? 'Serverul AI a întâmpinat o eroare internă după 3 încercări. Te rugăm să încerci din nou în câteva minute.'
-                    : lastError;
+            // ✅ Race paralel: 2 joburi simultan — primul care reuseste castiga
+            // Daca Wuyin esueaza intern ~50% din timp, sansa ca AMBELE sa esueze e ~25%
+            let videoUrl;
+            try {
+                videoUrl = await Promise.any([
+                    submitAndPoll(1),
+                    submitAndPoll(2),
+                ]);
+            } catch (aggErr) {
+                if (abortController.aborted) return;
+                const errors = aggErr.errors || [aggErr];
+                const msgs = errors.map(e => e?.message || String(e));
+                console.error(`[Video] Ambele sloturi au esuat: ${msgs.join(' | ')} | ${emailTag}`);
+                const isInternalOnly = msgs.every(m => m.includes('\u5f02\u5e38') || m.includes('\u8bf7\u91cd\u65b0') || m.includes('\u751f\u6210\u8fc7\u7a0b'));
+                const userMsg = isInternalOnly
+                    ? 'Serverul AI este suprasolicitat momentan. Incearca din nou in cateva minute.'
+                    : (msgs.find(m => !m.includes('slot') && !m.includes('\u5f02\u5e38')) || msgs[0]);
                 return sendError(userMsg);
             }
 
