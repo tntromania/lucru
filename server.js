@@ -428,28 +428,30 @@ const pollWuyinResult = async (jobId, apiKey, emailTag, onStatus, abortSignal) =
         }
 
         const status = data?.data?.status;
-        if (attempt === 1) console.log(`[WuyinPoll] jobId=${jobId} polling... | ${emailTag}`);
+        console.log(`[WuyinPoll] attempt=${attempt} status=${status} | ${emailTag}`);
 
 if (status === 2) {
     const d = data.data;
+    console.log(`[WuyinPoll] status=2 data: ${JSON.stringify(d)}`); 
+    
+    // Am adăugat verificarea pentru d.result la final
     const url = d.file_url || d.video_url || d.url ||
         (Array.isArray(d.file_urls) ? d.file_urls[0] : null) ||
         (Array.isArray(d.urls) ? d.urls[0] : null) ||
         (Array.isArray(d.result) ? d.result[0] : (typeof d.result === 'string' ? d.result : null));
-    console.log(`[WuyinPoll] ✅ SUCCESS jobId=${jobId} attempt=${attempt} url=${url} | ${emailTag}`);
-    if (!url) throw new Error('Raspuns succes dar fara URL video.');
+        
+    if (!url) throw new Error('Răspuns succes dar fără URL video.');
     return url;
 }
 
         if (status === 3) {
-            const msg = data?.data?.message || 'Generarea a esuat.';
-            console.log(`[WuyinPoll] ❌ FAILED jobId=${jobId} attempt=${attempt} msg=${msg} | ${emailTag}`);
+            const msg = data?.data?.message || 'Generarea a eșuat.';
             throw new Error(msg);
         }
 
-        // status 0 sau 1 — inca se proceseaza
+        // status 0 sau 1 — încă se procesează
         const elapsed = Math.round((Date.now() - startTime) / 1000);
-        if (onStatus) onStatus(`Se proceseaza... (${elapsed}s)`);
+        if (onStatus) onStatus(`Se procesează... (${elapsed}s)`);
     }
 };
 
