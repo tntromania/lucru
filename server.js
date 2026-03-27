@@ -529,14 +529,11 @@ app.post('/api/media/video/fast',
                 requestBody = { prompt: finalPrompt, aspectRatio: videoRatio, size: '1080p' };
             }
 
-            console.log(`[Video] START | ratio=${videoRatio} cost=${totalCost} hasFrames=${!!hasFrames} | ${emailTag}`);
+            console.log(`[Video] START | ratio=${videoRatio} cost=${totalCost} hasFrames=${hasFrames} | ${emailTag}`);
             sendStatus('Se genereaza...');
 
-            // Un singur abort controller shared intre ambele sloturi
-            // Cand primul slot termina cu succes, il seteaza pe aborted -> al doilea se opreste imediat
-            const raceAbort = { aborted: false };
-
-            const submitAndPoll = async (slotId) => {
+            // Submit un job si poll pana la rezultat, folosind raceAbort shared
+            const submitAndPoll = async (slotId, raceAbort) => {
                 const submitRes = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Authorization': process.env.WUYIN_API_KEY, 'Content-Type': 'application/json' },
@@ -551,25 +548,46 @@ app.post('/api/media/video/fast',
                 const jobId = submitData?.data?.id;
                 if (!jobId) throw new Error(`Fara ID job (slot ${slotId})`);
                 console.log(`[Video] Slot ${slotId} jobId=${jobId} | ${emailTag}`);
-                // Folosim raceAbort — daca celalalt slot a castigat deja, ne oprim
                 return await pollWuyinResult(jobId, process.env.WUYIN_API_KEY, emailTag, sendStatus, raceAbort);
             };
 
-            let videoUrl;
-            try {
-                videoUrl = await Promise.any([
-                    submitAndPoll(1).then(url => { raceAbort.aborted = true; return url; }),
-                    submitAndPoll(2).then(url => { raceAbort.aborted = true; return url; }),
-                ]);
-            } catch (aggErr) {
+            // Race paralel cu retry: max 2 runde de cate 2 joburi paralele
+            // Daca primul castigator apare, raceAbort.aborted=true opreste celalalt slot imediat
+            const INTERNAL_ERR = '生成过程';
+            const isInternalErr = (m) => m.includes('异常') || m.includes('请重新') || m.includes(INTERNAL_ERR);
+
+            let videoUrl = null;
+            let lastMsgs = [];
+
+            for (let round = 1; round <= 2; round++) {
                 if (clientAborted) return;
-                const errors = aggErr.errors || [aggErr];
-                const msgs = errors.map(e => e?.message || String(e));
-                console.error(`[Video] Ambele sloturi au esuat: ${msgs.join(' | ')} | ${emailTag}`);
-                const isInternal = msgs.every(m => m.includes('异常') || m.includes('请重新') || m.includes('生成过程'));
-                const userMsg = isInternal
+                if (round === 2) {
+                    sendStatus('Prima incercare a esuat, reincercam...');
+                    console.log(`[Video] Round 2 dupa esec intern Wuyin | ${emailTag}`);
+                    await new Promise(r => setTimeout(r, 4000));
+                }
+                const raceAbort = { aborted: false };
+                try {
+                    videoUrl = await Promise.any([
+                        submitAndPoll(round * 2 - 1, raceAbort).then(url => { raceAbort.aborted = true; return url; }),
+                        submitAndPoll(round * 2,     raceAbort).then(url => { raceAbort.aborted = true; return url; }),
+                    ]);
+                    break; // succes — iesim din retry loop
+                } catch (aggErr) {
+                    if (clientAborted) return;
+                    const errors = aggErr.errors || [aggErr];
+                    lastMsgs = errors.map(e => e?.message || String(e)).filter(m => m !== 'client_aborted');
+                    console.error(`[Video] Round ${round} esuat: ${lastMsgs.join(' | ')} | ${emailTag}`);
+                    // Reincercam doar daca e eroare interna Wuyin
+                    if (!lastMsgs.every(isInternalErr)) break;
+                }
+            }
+
+            if (!videoUrl) {
+                if (clientAborted) return;
+                const userMsg = lastMsgs.every(isInternalErr)
                     ? 'Serverul AI este suprasolicitat momentan. Incearca din nou in cateva minute.'
-                    : (msgs.find(m => !m.includes('slot') && !m.includes('异常')) || msgs[0]);
+                    : (lastMsgs.find(m => !m.includes('slot') && !isInternalErr(m)) || lastMsgs[0] || 'Eroare necunoscuta.');
                 return sendError(userMsg);
             }
 
