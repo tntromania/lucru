@@ -1,17 +1,21 @@
 {
-  "name": "viralio-voice",
-  "version": "3.0.0",
-  "description": "Voice AI Engine via Replicate + MongoDB Wallet",
+  "name": "viralio-media-studio",
+  "version": "1.0.0",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.600.0",
+    "@supabase/supabase-js": "^2.45.4",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "google-auth-library": "^9.15.0",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.2.1",
-    "google-auth-library": "^9.0.0",
-    "jsonwebtoken": "^9.0.2"
+    "multer": "^1.4.5-lts.1",
+    "node-fetch": "^2.7.0",
+    "sharp": "^0.33.4"
   }
 }
