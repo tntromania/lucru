@@ -65,16 +65,23 @@
         .glass-premium-fin { box-shadow: 0 10px 30px -10px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.8); }
         @keyframes premiumShine { 0% { transform: translateX(-150%) skewX(-20deg); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateX(250%) skewX(-20deg); opacity: 0; } }
         .animate-shine-fast { animation: premiumShine 2.5s infinite cubic-bezier(0.4, 0, 0.2, 1); }
-        @keyframes filmRoll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        @keyframes scanLine { 0% { top: 0%; opacity: 1; } 100% { top: 100%; opacity: 0; } }
-        @keyframes recordBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-        @keyframes waveBar { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
-        .film-strip { display: flex; gap: 0; animation: filmRoll 3s linear infinite; }
-        .film-frame { width: 48px; height: 36px; border: 2px solid rgba(99,102,241,0.3); border-radius: 4px; background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); flex-shrink: 0; margin-right: 8px; position: relative; overflow: hidden; }
-        .film-frame::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(99,102,241,0.15) 0%, transparent 100%); }
-        .scan-line { position: absolute; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #6366f1, transparent); animation: scanLine 2s ease-in-out infinite; }
-        .wave-bar { width: 3px; border-radius: 2px; background: #6366f1; animation: waveBar 0.8s ease-in-out infinite; }
-        .rec-dot { width: 8px; height: 8px; background: #ef4444; border-radius: 50%; animation: recordBlink 1s ease-in-out infinite; }
+        @keyframes vOrbit { 0% { transform: rotate(0deg) translateX(22px) rotate(0deg); } 100% { transform: rotate(360deg) translateX(22px) rotate(-360deg); } }
+        @keyframes vOrbit2 { 0% { transform: rotate(120deg) translateX(22px) rotate(-120deg); } 100% { transform: rotate(480deg) translateX(22px) rotate(-480deg); } }
+        @keyframes vOrbit3 { 0% { transform: rotate(240deg) translateX(22px) rotate(-240deg); } 100% { transform: rotate(600deg) translateX(22px) rotate(-600deg); } }
+        @keyframes vPulseRing { 0% { transform: scale(0.8); opacity: 0.8; } 50% { transform: scale(1.15); opacity: 0.3; } 100% { transform: scale(0.8); opacity: 0.8; } }
+        @keyframes vGlow { 0%,100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); } 50% { box-shadow: 0 0 0 8px rgba(99,102,241,0.12); } }
+        @keyframes vShimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
+        @keyframes vFadeUp { 0% { opacity:0.4; transform:translateY(3px); } 100% { opacity:1; transform:translateY(0); } }
+        .v-loader-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding: 28px 20px; }
+        .v-orbit-wrap { position:relative; width:56px; height:56px; flex-shrink:0; }
+        .v-orbit-center { position:absolute; inset:0; margin:auto; width:18px; height:18px; border-radius:50%; background:linear-gradient(135deg,#4f46e5,#ec4899); animation:vGlow 2s ease-in-out infinite; }
+        .v-orbit-center::after { content:''; position:absolute; inset:-3px; border-radius:50%; border:1.5px solid rgba(99,102,241,0.25); animation:vPulseRing 2s ease-in-out infinite; }
+        .v-dot { position:absolute; inset:0; margin:auto; width:7px; height:7px; border-radius:50%; }
+        .v-dot-1 { background:#6366f1; animation:vOrbit 1.6s linear infinite; }
+        .v-dot-2 { background:#a855f7; animation:vOrbit2 1.6s linear infinite; }
+        .v-dot-3 { background:#ec4899; animation:vOrbit3 1.6s linear infinite; }
+        .v-status-text { font-size:0.8rem; font-weight:700; color:#6366f1; letter-spacing:0.03em; animation:vFadeUp 0.4s ease; }
+        .v-shimmer-bar { height:3px; width:120px; border-radius:99px; background:linear-gradient(90deg,#e0e7ff 0%,#6366f1 40%,#ec4899 60%,#e0e7ff 100%); background-size:200% auto; animation:vShimmer 1.8s linear infinite; }
         .job-card { background: white; border: 1.5px solid #e2e8f0; border-radius: 20px; overflow: hidden; margin-bottom: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.04); animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1) forwards; }
         .job-card.processing { border-color: #c7d2fe; }
         .job-card.done { border-color: #a7f3d0; }
@@ -591,30 +598,16 @@ function createJobCard(jobId, promptText, currentMode){
         </div>
         <div id="job-body-${jobId}" class="overflow-hidden">
             ${currentMode === 'video' ? `
-            <div class="relative bg-gradient-to-br from-slate-900 to-indigo-950 px-5 py-5 overflow-hidden">
-                <!-- Film strip top -->
-                <div class="overflow-hidden h-10 mb-4 relative">
-                    <div class="film-strip">
-                        <div class="film-frame" style="animation-delay:0.0s"><div class="scan-line"></div></div><div class="film-frame" style="animation-delay:0.1s"><div class="scan-line"></div></div><div class="film-frame" style="animation-delay:0.2s"><div class="scan-line"></div></div><div class="film-frame" style="animation-delay:0.30000000000000004s"><div class="scan-line"></div></div><div class="film-frame" style="animation-delay:0.4s"><div class="scan-line"></div></div><div class="film-frame" style="animation-delay:0.5s"><div class="scan-line"></div></div><div class="film-frame" style="animation-delay:0.6000000000000001s"><div class="scan-line"></div></div><div class="film-frame" style="animation-delay:0.7000000000000001s"><div class="scan-line"></div></div><div class="film-frame" style="animation-delay:0.8s"><div class="scan-line"></div></div><div class="film-frame" style="animation-delay:0.9s"><div class="scan-line"></div></div><div class="film-frame" style="animation-delay:0.0s"></div><div class="film-frame" style="animation-delay:0.1s"></div><div class="film-frame" style="animation-delay:0.2s"></div><div class="film-frame" style="animation-delay:0.30000000000000004s"></div><div class="film-frame" style="animation-delay:0.4s"></div><div class="film-frame" style="animation-delay:0.5s"></div><div class="film-frame" style="animation-delay:0.6000000000000001s"></div><div class="film-frame" style="animation-delay:0.7000000000000001s"></div><div class="film-frame" style="animation-delay:0.8s"></div><div class="film-frame" style="animation-delay:0.9s"></div>
-                    </div>
+            <div class="v-loader-wrap">
+                <div class="v-orbit-wrap">
+                    <div class="v-orbit-center"></div>
+                    <div class="v-dot v-dot-1"></div>
+                    <div class="v-dot v-dot-2"></div>
+                    <div class="v-dot v-dot-3"></div>
                 </div>
-                <!-- Center: REC + waveform -->
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <div class="rec-dot"></div>
-                        <span class="text-xs font-black text-red-400 tracking-widest">REC</span>
-                    </div>
-                    <div class="flex items-end gap-[3px] h-6">
-                        <div class="wave-bar" style="height:7px;animation-delay:0.00s"></div><div class="wave-bar" style="height:14px;animation-delay:0.07s"></div><div class="wave-bar" style="height:24px;animation-delay:0.14s"></div><div class="wave-bar" style="height:19px;animation-delay:0.21s"></div><div class="wave-bar" style="height:12px;animation-delay:0.28s"></div><div class="wave-bar" style="height:21px;animation-delay:0.35s"></div><div class="wave-bar" style="height:9px;animation-delay:0.42s"></div><div class="wave-bar" style="height:16px;animation-delay:0.49s"></div><div class="wave-bar" style="height:24px;animation-delay:0.56s"></div><div class="wave-bar" style="height:14px;animation-delay:0.63s"></div><div class="wave-bar" style="height:7px;animation-delay:0.70s"></div><div class="wave-bar" style="height:19px;animation-delay:0.77s"></div>
-                    </div>
-                    <span class="text-xs font-bold text-indigo-300 font-mono">AI GEN</span>
-                </div>
-                <!-- Status text -->
-                <p id="job-status-${jobId}" class="text-xs text-indigo-200 font-medium text-center mb-3 tracking-wide"></p>
-                <!-- Cancel -->
-                <div class="flex justify-center">
-                    <button onclick="cancelJob(${jobId})" class="text-xs text-slate-400 hover:text-red-400 transition-colors px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10">✕ Anulează</button>
-                </div>
+                <p id="job-status-${jobId}" class="v-status-text">Se generează...</p>
+                <div class="v-shimmer-bar"></div>
+                <button onclick="cancelJob(${jobId})" class="text-xs text-slate-400 hover:text-red-500 transition-colors mt-1">✕ Anulează</button>
             </div>
             ` : `
             <div class="px-5 py-4 flex items-center gap-4">
