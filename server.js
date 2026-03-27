@@ -530,9 +530,12 @@ app.post('/api/media/video/fast',
             }
 
             console.log(`[Video] START | ratio=${videoRatio} cost=${totalCost} hasFrames=${!!hasFrames} | ${emailTag}`);
-            sendStatus('Se generează... (poate dura 1-2 min)');
+            sendStatus('Se genereaza...');
 
-            // ✅ Funcție helper: submit un job Wuyin și poll până la rezultat
+            // Un singur abort controller shared intre ambele sloturi
+            // Cand primul slot termina cu succes, il seteaza pe aborted -> al doilea se opreste imediat
+            const raceAbort = { aborted: false };
+
             const submitAndPoll = async (slotId) => {
                 const submitRes = await fetch(endpoint, {
                     method: 'POST',
@@ -548,26 +551,25 @@ app.post('/api/media/video/fast',
                 const jobId = submitData?.data?.id;
                 if (!jobId) throw new Error(`Fara ID job (slot ${slotId})`);
                 console.log(`[Video] Slot ${slotId} jobId=${jobId} | ${emailTag}`);
-                return await pollWuyinResult(jobId, process.env.WUYIN_API_KEY, emailTag, sendStatus, abortController);
+                // Folosim raceAbort — daca celalalt slot a castigat deja, ne oprim
+                return await pollWuyinResult(jobId, process.env.WUYIN_API_KEY, emailTag, sendStatus, raceAbort);
             };
 
-            // ✅ Race paralel: 2 joburi simultan — primul care reuseste castiga
-            // Daca Wuyin esueaza intern ~50% din timp, sansa ca AMBELE sa esueze e ~25%
             let videoUrl;
             try {
                 videoUrl = await Promise.any([
-                    submitAndPoll(1),
-                    submitAndPoll(2),
+                    submitAndPoll(1).then(url => { raceAbort.aborted = true; return url; }),
+                    submitAndPoll(2).then(url => { raceAbort.aborted = true; return url; }),
                 ]);
             } catch (aggErr) {
-                if (abortController.aborted) return;
+                if (clientAborted) return;
                 const errors = aggErr.errors || [aggErr];
                 const msgs = errors.map(e => e?.message || String(e));
                 console.error(`[Video] Ambele sloturi au esuat: ${msgs.join(' | ')} | ${emailTag}`);
-                const isInternalOnly = msgs.every(m => m.includes('\u5f02\u5e38') || m.includes('\u8bf7\u91cd\u65b0') || m.includes('\u751f\u6210\u8fc7\u7a0b'));
-                const userMsg = isInternalOnly
+                const isInternal = msgs.every(m => m.includes('异常') || m.includes('请重新') || m.includes('生成过程'));
+                const userMsg = isInternal
                     ? 'Serverul AI este suprasolicitat momentan. Incearca din nou in cateva minute.'
-                    : (msgs.find(m => !m.includes('slot') && !m.includes('\u5f02\u5e38')) || msgs[0]);
+                    : (msgs.find(m => !m.includes('slot') && !m.includes('异常')) || msgs[0]);
                 return sendError(userMsg);
             }
 
