@@ -570,31 +570,24 @@ app.post('/api/media/video/fast',
                 return clean || 'Eroare la generare. Încearcă din nou.';
             };
 
+            // 3 joburi simultan — primul care reuseste castiga, celelalte 2 se opresc imediat
+            const raceAbort = { aborted: false };
+            const makeSlot = (id) => submitAndPoll(id, raceAbort).then(url => {
+                raceAbort.aborted = true;
+                console.log(`[Video] 🏆 Slot ${id} a castigat race-ul | ${emailTag}`);
+                return url;
+            });
+
             let videoUrl = null;
             let lastMsgs = [];
 
-            for (let round = 1; round <= 2; round++) {
+            try {
+                videoUrl = await Promise.any([ makeSlot(1), makeSlot(2), makeSlot(3) ]);
+            } catch (aggErr) {
                 if (clientAborted) return;
-                if (round === 2) {
-                    sendStatus('Prima incercare a esuat, reincercam...');
-                    console.log(`[Video] Round 2 dupa esec intern Wuyin | ${emailTag}`);
-                    await new Promise(r => setTimeout(r, 4000));
-                }
-                const raceAbort = { aborted: false };
-                try {
-                    videoUrl = await Promise.any([
-                        submitAndPoll(round * 2 - 1, raceAbort).then(url => { raceAbort.aborted = true; return url; }),
-                        submitAndPoll(round * 2,     raceAbort).then(url => { raceAbort.aborted = true; return url; }),
-                    ]);
-                    break; // succes — iesim din retry loop
-                } catch (aggErr) {
-                    if (clientAborted) return;
-                    const errors = aggErr.errors || [aggErr];
-                    lastMsgs = errors.map(e => e?.message || String(e)).filter(m => m !== 'client_aborted');
-                    console.error(`[Video] Round ${round} esuat: ${lastMsgs.join(' | ')} | ${emailTag}`);
-                    // Reincercam doar daca e eroare interna Wuyin
-                    if (!lastMsgs.every(isInternalErr)) break;
-                }
+                const errors = aggErr.errors || [aggErr];
+                lastMsgs = errors.map(e => e?.message || String(e)).filter(m => m !== 'client_aborted');
+                console.error(`[Video] Toate 3 sloturi au esuat: ${lastMsgs.join(' | ')} | ${emailTag}`);
             }
 
             if (!videoUrl) {
